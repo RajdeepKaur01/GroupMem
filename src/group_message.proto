@@ -1,0 +1,18 @@
+option java_outer_classname = "GroupMessage";
+
+message Message {
+  message Member {
+    required string ip = 1;
+    required int32 port = 2;
+    required int32 timestamp = 3;
+  }
+  required Member target = 1;
+
+  enum Action {
+    TARGET_JOINS = 0;
+    TARGET_LEAVES = 1;
+    TARGET_FAILS = 2;
+    TARGET_HEARTBEATS = 3;
+  }
+  required Action action = 2 [default = TARGET_HEARTBEATS];
+}

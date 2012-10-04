@@ -1,0 +1,19 @@
+SRC_DIR = src
+BIN_DIR = bin
+LIB_DIR = lib
+JC = javac
+JFLAGS = -g \
+	 -classpath $(LIB_DIR)/protobuf-java-2.4.1.jar \
+	 -d $(BIN_DIR)
+
+SOURCES = $(wildcard $(SRC_DIR)/*.java)
+CLASSES = $(addprefix ../$(BIN_DIR)/,	\
+	    $(SOURCES:.java=.class)	\
+	  ) 
+all: $(CLASSES)
+
+$(BIN_DIR)/%.class : $(SRC_DIR)/%.java
+	 $(JC) $(JFLAGS) $<
+	
+clean:
+	$(RM) $(BIN_DIR)/*.class
