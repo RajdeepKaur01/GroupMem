@@ -8,4 +8,15 @@ just 'make'
 
 Usage
 ========
+java -cp bin:lib/protobuf-java-2.4.1.jar bin:edu.uiuc.groupmessage.MemListNode <listen_port> <portal_ip> <portal_port>
 
+Example
+========
+java -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 1234 130.126.112.146 1234
+
+Command
+========
+When executing MemListNode,
+type 'leave' to leave the group
+type 'join' to join the group
+Ctrl+C to fail the node
