@@ -12,7 +12,14 @@ java -cp bin:lib/protobuf-java-2.4.1.jar bin:edu.uiuc.groupmessage.MemListNode <
 
 Example
 ========
-java -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 1234 130.126.112.146 1234
+Run the following command in the respective machines
+java -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 7711 130.126.112.146 7711
+java -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 7722 130.126.112.148 7711
+java -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 7733 130.126.112.117 7711
+java -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 7744 130.126.112.146 7711
+
+The log file will be put in /tmp/<ip>_<port>.log
+For example, /tmp/130.126.112.146_7711.log
 
 Command
 ========
