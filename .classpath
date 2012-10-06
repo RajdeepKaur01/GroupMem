@@ -3,4 +3,5 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="lib" path="lib/protobuf-java-2.4.1.jar"/>
 </classpath>

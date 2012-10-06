@@ -6,7 +6,9 @@
 SRC_DIR = src
 BIN_DIR = bin
 LIB_DIR = lib
-JFLAGS = -g -cp $(LIB_DIR)/protobuf-java-2.4.1.jar -d $(BIN_DIR)
+JCFLAGS = -g -sourcepath $(SRC_DIR) -cp $(LIB_DIR)/protobuf-java-2.4.1.jar:$(BIN_DIR) -d $(BIN_DIR)
+JFLAGS = -cp $(LIB_DIR)/protobuf-java-2.4.1.jar:$(BIN_DIR)
+JAVA = java
 JC = javac
 
 
@@ -35,17 +37,22 @@ JC = javac
 #
 
 .java.class:
-	$(JC) $(JFLAGS) $<
+	$(JC) $(JCFLAGS) $<
 
 
 #
 # CLASSES is a macro consisting of 4 words (one for each java source file)
 #
-vpath %.java $(SRC_DIR)
-vpath %.class $(BIN_DIR)
+vpath %.java $(SRC_DIR)/edu/uiuc/groupmessage
+vpath %.class $(BIN_DIR)/edu/uiuc/groupmessage
 CLASSES = \
-	GroupMessage.java \
-	TestMain.java
+	GroupMessageProtos.java \
+	MemListServer.java \
+	MemListServerWorker.java \
+	MemListNode.java \
+	HeartbeatServer.java \
+	HeartbeatClient.java \
+	FailureDetector.java
 
 #
 # the default make target entry
@@ -64,9 +71,16 @@ default: classes
 classes: $(CLASSES:.java=.class)
 
 
+.PHONY: clean run
+
 #
 # RM is a predefined macro in make (RM = rm -f)
 #
 
 clean:
 	$(RM) $(BIN_DIR)/*.class
+	$(RM) $(BIN_DIR)/edu/uiuc/groupmessage/*.class
+
+
+run:
+	$(JAVA) $(JFLAGS) edu.uiuc.groupmessage.MemListNode
