@@ -52,7 +52,8 @@ CLASSES = \
 	MemListNode.java \
 	HeartbeatServer.java \
 	HeartbeatClient.java \
-	FailureDetector.java
+	FailureDetector.java \
+	SDFSClient.java
 
 #
 # the default make target entry

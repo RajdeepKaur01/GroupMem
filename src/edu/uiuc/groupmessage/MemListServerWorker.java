@@ -24,7 +24,6 @@ class MemListServerWorker extends Thread {
       InputStream sock_in = sock.getInputStream();
       OutputStream sock_out = sock.getOutputStream();
       GroupMessage msg = GroupMessage.parseDelimitedFrom(sock_in);
-      System.out.println("Join request read");
 
       // Print the message content
       System.out.println(msg.toString());

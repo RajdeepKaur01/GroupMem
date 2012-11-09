@@ -24,6 +24,7 @@ import java.util.logging.SimpleFormatter;
 
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 import edu.uiuc.groupmessage.GroupMessageProtos.Member;
+import com.google.protobuf.ByteString;
 
 class MemListNode {
   private Member currentMember;
@@ -106,8 +107,21 @@ class MemListNode {
     case TARGET_HEARTBEATS:
       handleHeartbeats(msg.getTarget());
       break;
+    case PUT_FILE:
+      return handlePutFile(msg.getFileName(), msg.getFileContent());
+    default:
+      LOGGER.info("Unknown message action " + msg.getAction().name());
+      break;
     }
     return null;
+  }
+
+  public GroupMessage handlePutFile(String file_name, ByteString file_content) {
+    LOGGER.warning("Received file " + file_name + " of size " + file_content.size());
+    return GroupMessage.newBuilder()
+	    .setTarget(currentMember)
+	    .setAction(GroupMessage.Action.FILE_OK)
+	    .build();
   }
 
   public void handleHeartbeats(Member sender) {
@@ -312,12 +326,12 @@ class MemListNode {
     synchronized(memberList) {
       // Sort the memberList by timestamp to ensure everyone has the same order
       Collections.sort(memberList, new Comparator< Member >() {
-		       @Override
-		       public int compare(Member m1, Member m2) {
-		       return
-		       Integer.valueOf(m1.getTimestamp()).compareTo(m2.getTimestamp());
-		       }
-		       });
+	@Override
+	public int compare(Member m1, Member m2) {
+	  return
+	    Integer.valueOf(m1.getTimestamp()).compareTo(m2.getTimestamp());
+	}
+      });
 
       // Update the member HeartbeatFrom and HeartbeatTo
       int index = memberList.indexOf(currentMember);

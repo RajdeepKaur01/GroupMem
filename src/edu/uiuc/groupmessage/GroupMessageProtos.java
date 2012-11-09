@@ -534,6 +534,14 @@ public final class GroupMessageProtos {
         getMemberOrBuilderList();
     edu.uiuc.groupmessage.GroupMessageProtos.MemberOrBuilder getMemberOrBuilder(
         int index);
+    
+    // optional bytes file_content = 4;
+    boolean hasFileContent();
+    com.google.protobuf.ByteString getFileContent();
+    
+    // optional string file_name = 5;
+    boolean hasFileName();
+    String getFileName();
   }
   public static final class GroupMessage extends
       com.google.protobuf.GeneratedMessage
@@ -571,6 +579,11 @@ public final class GroupMessageProtos {
       TARGET_LEAVES(3, 3),
       TARGET_FAILS(4, 4),
       TARGET_HEARTBEATS(5, 5),
+      PUT_FILE(6, 6),
+      GET_FILE(7, 7),
+      DELETE_FILE(8, 8),
+      FILE_OK(9, 9),
+      FILE_ERROR(10, 10),
       ;
       
       public static final int JOIN_REQUEST_VALUE = 0;
@@ -579,6 +592,11 @@ public final class GroupMessageProtos {
       public static final int TARGET_LEAVES_VALUE = 3;
       public static final int TARGET_FAILS_VALUE = 4;
       public static final int TARGET_HEARTBEATS_VALUE = 5;
+      public static final int PUT_FILE_VALUE = 6;
+      public static final int GET_FILE_VALUE = 7;
+      public static final int DELETE_FILE_VALUE = 8;
+      public static final int FILE_OK_VALUE = 9;
+      public static final int FILE_ERROR_VALUE = 10;
       
       
       public final int getNumber() { return value; }
@@ -591,6 +609,11 @@ public final class GroupMessageProtos {
           case 3: return TARGET_LEAVES;
           case 4: return TARGET_FAILS;
           case 5: return TARGET_HEARTBEATS;
+          case 6: return PUT_FILE;
+          case 7: return GET_FILE;
+          case 8: return DELETE_FILE;
+          case 9: return FILE_OK;
+          case 10: return FILE_ERROR;
           default: return null;
         }
       }
@@ -621,7 +644,7 @@ public final class GroupMessageProtos {
       }
       
       private static final Action[] VALUES = {
-        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, 
+        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, PUT_FILE, GET_FILE, DELETE_FILE, FILE_OK, FILE_ERROR, 
       };
       
       public static Action valueOf(
@@ -689,10 +712,54 @@ public final class GroupMessageProtos {
       return member_.get(index);
     }
     
+    // optional bytes file_content = 4;
+    public static final int FILE_CONTENT_FIELD_NUMBER = 4;
+    private com.google.protobuf.ByteString fileContent_;
+    public boolean hasFileContent() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    public com.google.protobuf.ByteString getFileContent() {
+      return fileContent_;
+    }
+    
+    // optional string file_name = 5;
+    public static final int FILE_NAME_FIELD_NUMBER = 5;
+    private java.lang.Object fileName_;
+    public boolean hasFileName() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    public String getFileName() {
+      java.lang.Object ref = fileName_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+          fileName_ = s;
+        }
+        return s;
+      }
+    }
+    private com.google.protobuf.ByteString getFileNameBytes() {
+      java.lang.Object ref = fileName_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+        fileName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    
     private void initFields() {
       target_ = edu.uiuc.groupmessage.GroupMessageProtos.Member.getDefaultInstance();
       action_ = edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage.Action.TARGET_HEARTBEATS;
       member_ = java.util.Collections.emptyList();
+      fileContent_ = com.google.protobuf.ByteString.EMPTY;
+      fileName_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -733,6 +800,12 @@ public final class GroupMessageProtos {
       for (int i = 0; i < member_.size(); i++) {
         output.writeMessage(3, member_.get(i));
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBytes(4, fileContent_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeBytes(5, getFileNameBytes());
+      }
       getUnknownFields().writeTo(output);
     }
     
@@ -753,6 +826,14 @@ public final class GroupMessageProtos {
       for (int i = 0; i < member_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(3, member_.get(i));
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(4, fileContent_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(5, getFileNameBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -894,6 +975,10 @@ public final class GroupMessageProtos {
         } else {
           memberBuilder_.clear();
         }
+        fileContent_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000008);
+        fileName_ = "";
+        bitField0_ = (bitField0_ & ~0x00000010);
         return this;
       }
       
@@ -953,6 +1038,14 @@ public final class GroupMessageProtos {
         } else {
           result.member_ = memberBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.fileContent_ = fileContent_;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.fileName_ = fileName_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1000,6 +1093,12 @@ public final class GroupMessageProtos {
               memberBuilder_.addAllMessages(other.member_);
             }
           }
+        }
+        if (other.hasFileContent()) {
+          setFileContent(other.getFileContent());
+        }
+        if (other.hasFileName()) {
+          setFileName(other.getFileName());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1074,6 +1173,16 @@ public final class GroupMessageProtos {
               edu.uiuc.groupmessage.GroupMessageProtos.Member.Builder subBuilder = edu.uiuc.groupmessage.GroupMessageProtos.Member.newBuilder();
               input.readMessage(subBuilder, extensionRegistry);
               addMember(subBuilder.buildPartial());
+              break;
+            }
+            case 34: {
+              bitField0_ |= 0x00000008;
+              fileContent_ = input.readBytes();
+              break;
+            }
+            case 42: {
+              bitField0_ |= 0x00000010;
+              fileName_ = input.readBytes();
               break;
             }
           }
@@ -1382,6 +1491,66 @@ public final class GroupMessageProtos {
         return memberBuilder_;
       }
       
+      // optional bytes file_content = 4;
+      private com.google.protobuf.ByteString fileContent_ = com.google.protobuf.ByteString.EMPTY;
+      public boolean hasFileContent() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      public com.google.protobuf.ByteString getFileContent() {
+        return fileContent_;
+      }
+      public Builder setFileContent(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+        fileContent_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearFileContent() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        fileContent_ = getDefaultInstance().getFileContent();
+        onChanged();
+        return this;
+      }
+      
+      // optional string file_name = 5;
+      private java.lang.Object fileName_ = "";
+      public boolean hasFileName() {
+        return ((bitField0_ & 0x00000010) == 0x00000010);
+      }
+      public String getFileName() {
+        java.lang.Object ref = fileName_;
+        if (!(ref instanceof String)) {
+          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+          fileName_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
+      }
+      public Builder setFileName(String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000010;
+        fileName_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearFileName() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        fileName_ = getDefaultInstance().getFileName();
+        onChanged();
+        return this;
+      }
+      void setFileName(com.google.protobuf.ByteString value) {
+        bitField0_ |= 0x00000010;
+        fileName_ = value;
+        onChanged();
+      }
+      
       // @@protoc_insertion_point(builder_scope:GroupMessage)
     }
     
@@ -1413,15 +1582,18 @@ public final class GroupMessageProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\023group_message.proto\"5\n\006Member\022\n\n\002ip\030\001 " +
-      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\371\001\n" +
+      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\355\002\n" +
       "\014GroupMessage\022\027\n\006target\030\001 \002(\0132\007.Member\0227" +
       "\n\006action\030\002 \002(\0162\024.GroupMessage.Action:\021TA" +
       "RGET_HEARTBEATS\022\027\n\006member\030\003 \003(\0132\007.Member" +
-      "\"~\n\006Action\022\020\n\014JOIN_REQUEST\020\000\022\024\n\020RESET_ME" +
-      "MBERLIST\020\001\022\020\n\014TARGET_JOINS\020\002\022\021\n\rTARGET_L" +
-      "EAVES\020\003\022\020\n\014TARGET_FAILS\020\004\022\025\n\021TARGET_HEAR" +
-      "TBEATS\020\005B+\n\025edu.uiuc.groupmessageB\022Group" +
-      "MessageProtos"
+      "\022\024\n\014file_content\030\004 \001(\014\022\021\n\tfile_name\030\005 \001(" +
+      "\t\"\310\001\n\006Action\022\020\n\014JOIN_REQUEST\020\000\022\024\n\020RESET_" +
+      "MEMBERLIST\020\001\022\020\n\014TARGET_JOINS\020\002\022\021\n\rTARGET" +
+      "_LEAVES\020\003\022\020\n\014TARGET_FAILS\020\004\022\025\n\021TARGET_HE" +
+      "ARTBEATS\020\005\022\014\n\010PUT_FILE\020\006\022\014\n\010GET_FILE\020\007\022\017",
+      "\n\013DELETE_FILE\020\010\022\013\n\007FILE_OK\020\t\022\016\n\nFILE_ERR" +
+      "OR\020\nB+\n\025edu.uiuc.groupmessageB\022GroupMess" +
+      "ageProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -1441,7 +1613,7 @@ public final class GroupMessageProtos {
           internal_static_GroupMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_GroupMessage_descriptor,
-              new java.lang.String[] { "Target", "Action", "Member", },
+              new java.lang.String[] { "Target", "Action", "Member", "FileContent", "FileName", },
               edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage.class,
               edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage.Builder.class);
           return null;

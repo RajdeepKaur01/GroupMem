@@ -16,7 +16,14 @@ message GroupMessage {
     TARGET_LEAVES = 3;
     TARGET_FAILS = 4;
     TARGET_HEARTBEATS = 5;
+    PUT_FILE = 6;
+    GET_FILE = 7;
+    DELETE_FILE = 8;
+    FILE_OK = 9;
+    FILE_ERROR = 10;
   }
   required Action action = 2 [default = TARGET_HEARTBEATS];
   repeated Member member = 3;
+  optional bytes file_content = 4;
+  optional string file_name = 5;
 }
