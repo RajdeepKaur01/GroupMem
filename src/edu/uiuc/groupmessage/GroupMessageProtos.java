@@ -579,11 +579,13 @@ public final class GroupMessageProtos {
       TARGET_LEAVES(3, 3),
       TARGET_FAILS(4, 4),
       TARGET_HEARTBEATS(5, 5),
-      PUT_FILE(6, 6),
-      GET_FILE(7, 7),
-      DELETE_FILE(8, 8),
-      FILE_OK(9, 9),
-      FILE_ERROR(10, 10),
+      GET_FILE_LOCATION(6, 6),
+      FILE_LOCATION(7, 7),
+      PUT_FILE(8, 8),
+      GET_FILE(9, 9),
+      DELETE_FILE(10, 10),
+      FILE_OK(11, 11),
+      FILE_ERROR(12, 12),
       ;
       
       public static final int JOIN_REQUEST_VALUE = 0;
@@ -592,11 +594,13 @@ public final class GroupMessageProtos {
       public static final int TARGET_LEAVES_VALUE = 3;
       public static final int TARGET_FAILS_VALUE = 4;
       public static final int TARGET_HEARTBEATS_VALUE = 5;
-      public static final int PUT_FILE_VALUE = 6;
-      public static final int GET_FILE_VALUE = 7;
-      public static final int DELETE_FILE_VALUE = 8;
-      public static final int FILE_OK_VALUE = 9;
-      public static final int FILE_ERROR_VALUE = 10;
+      public static final int GET_FILE_LOCATION_VALUE = 6;
+      public static final int FILE_LOCATION_VALUE = 7;
+      public static final int PUT_FILE_VALUE = 8;
+      public static final int GET_FILE_VALUE = 9;
+      public static final int DELETE_FILE_VALUE = 10;
+      public static final int FILE_OK_VALUE = 11;
+      public static final int FILE_ERROR_VALUE = 12;
       
       
       public final int getNumber() { return value; }
@@ -609,11 +613,13 @@ public final class GroupMessageProtos {
           case 3: return TARGET_LEAVES;
           case 4: return TARGET_FAILS;
           case 5: return TARGET_HEARTBEATS;
-          case 6: return PUT_FILE;
-          case 7: return GET_FILE;
-          case 8: return DELETE_FILE;
-          case 9: return FILE_OK;
-          case 10: return FILE_ERROR;
+          case 6: return GET_FILE_LOCATION;
+          case 7: return FILE_LOCATION;
+          case 8: return PUT_FILE;
+          case 9: return GET_FILE;
+          case 10: return DELETE_FILE;
+          case 11: return FILE_OK;
+          case 12: return FILE_ERROR;
           default: return null;
         }
       }
@@ -644,7 +650,7 @@ public final class GroupMessageProtos {
       }
       
       private static final Action[] VALUES = {
-        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, PUT_FILE, GET_FILE, DELETE_FILE, FILE_OK, FILE_ERROR, 
+        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, GET_FILE_LOCATION, FILE_LOCATION, PUT_FILE, GET_FILE, DELETE_FILE, FILE_OK, FILE_ERROR, 
       };
       
       public static Action valueOf(
@@ -1582,18 +1588,19 @@ public final class GroupMessageProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\023group_message.proto\"5\n\006Member\022\n\n\002ip\030\001 " +
-      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\355\002\n" +
+      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\227\003\n" +
       "\014GroupMessage\022\027\n\006target\030\001 \002(\0132\007.Member\0227" +
       "\n\006action\030\002 \002(\0162\024.GroupMessage.Action:\021TA" +
       "RGET_HEARTBEATS\022\027\n\006member\030\003 \003(\0132\007.Member" +
       "\022\024\n\014file_content\030\004 \001(\014\022\021\n\tfile_name\030\005 \001(" +
-      "\t\"\310\001\n\006Action\022\020\n\014JOIN_REQUEST\020\000\022\024\n\020RESET_" +
+      "\t\"\362\001\n\006Action\022\020\n\014JOIN_REQUEST\020\000\022\024\n\020RESET_" +
       "MEMBERLIST\020\001\022\020\n\014TARGET_JOINS\020\002\022\021\n\rTARGET" +
       "_LEAVES\020\003\022\020\n\014TARGET_FAILS\020\004\022\025\n\021TARGET_HE" +
-      "ARTBEATS\020\005\022\014\n\010PUT_FILE\020\006\022\014\n\010GET_FILE\020\007\022\017",
-      "\n\013DELETE_FILE\020\010\022\013\n\007FILE_OK\020\t\022\016\n\nFILE_ERR" +
-      "OR\020\nB+\n\025edu.uiuc.groupmessageB\022GroupMess" +
-      "ageProtos"
+      "ARTBEATS\020\005\022\025\n\021GET_FILE_LOCATION\020\006\022\021\n\rFIL",
+      "E_LOCATION\020\007\022\014\n\010PUT_FILE\020\010\022\014\n\010GET_FILE\020\t" +
+      "\022\017\n\013DELETE_FILE\020\n\022\013\n\007FILE_OK\020\013\022\016\n\nFILE_E" +
+      "RROR\020\014B+\n\025edu.uiuc.groupmessageB\022GroupMe" +
+      "ssageProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

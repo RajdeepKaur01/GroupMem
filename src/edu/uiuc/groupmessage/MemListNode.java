@@ -107,6 +107,8 @@ class MemListNode {
     case TARGET_HEARTBEATS:
       handleHeartbeats(msg.getTarget());
       break;
+    case GET_FILE_LOCATION:
+      return handleGetFileLocation(msg.getFileName());
     case PUT_FILE:
       return handlePutFile(msg.getFileName(), msg.getFileContent());
     default:
@@ -114,6 +116,20 @@ class MemListNode {
       break;
     }
     return null;
+  }
+
+  public GroupMessage handleGetFileLocation(String file_name) {
+    if (file_name == null) {
+      return GroupMessage.newBuilder()
+	.setTarget(currentMember)
+	.setAction(GroupMessage.Action.FILE_ERROR)
+	.build();
+    }
+    LOGGER.warning("Received query for the file " + file_name);
+    return GroupMessage.newBuilder()
+	    .setTarget(currentMember)
+	    .setAction(GroupMessage.Action.FILE_LOCATION)
+	    .build();
   }
 
   public GroupMessage handlePutFile(String file_name, ByteString file_content) {

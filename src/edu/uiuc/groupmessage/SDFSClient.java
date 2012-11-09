@@ -41,7 +41,22 @@ class SDFSClient extends Thread {
   }
 
   public void putFile(String local_name, String sdfs_name) {
+    GroupMessage send_msg, rcv_msg;
     if (local_name == null || sdfs_name == null) {
+      return;
+    }
+
+    // Prepare for GET_FILE_LOCATION message
+    send_msg = GroupMessage.newBuilder()
+      .setTarget(master)
+      .setAction(GroupMessage.Action.GET_FILE_LOCATION)
+      .setFileName(sdfs_name)
+      .build();
+
+    // send the message to the master and check the response
+    rcv_msg = sendMessage(master, send_msg);
+    if (rcv_msg.getAction() != GroupMessage.Action.FILE_LOCATION) {
+      System.out.println("Received Unknown message action " + rcv_msg.getAction().name());
       return;
     }
 
@@ -51,65 +66,75 @@ class SDFSClient extends Thread {
       return;
     }
 
-    // send the message to the master
-    sendMessage(GroupMessage.Action.PUT_FILE, sdfs_name, file_data);
+    // Prepare for the PUT_FILE message
+    send_msg = GroupMessage.newBuilder()
+      .setTarget(rcv_msg.getTarget())
+      .setAction(GroupMessage.Action.PUT_FILE)
+      .setFileContent(file_data)
+      .setFileName(sdfs_name)
+      .build();
+
+
+    // upload the file to the file location
+    rcv_msg = sendMessage(rcv_msg.getTarget(), send_msg);
+
+    // check the response
+    switch (rcv_msg.getAction()) {
+      case FILE_OK:
+	System.out.println("Successfully sent the file " + local_name);
+	break;
+      case FILE_ERROR:
+	System.out.println("Error sending the file " + local_name);
+	break;
+      case FILE_LOCATION:
+      default:
+	System.out.println("Received Unknown action " + rcv_msg.getAction().name());
+	break;
+    }
   }
 
-  private void sendMessage(GroupMessage.Action action,
-			   String file_name,
-			   ByteString file_content) {
-    new Thread() {
-      private Member master;
-      private GroupMessage.Action action;
-      private String fileName;
-      private ByteString fileContent;
-      public Thread init(Member master,
-			 GroupMessage.Action action,
-			 String file_name,
-			 ByteString file_content) {
-	this.master = master;
-	this.action = action;
-	this.fileName = file_name;
-	this.fileContent = file_content;
-	return this;
+  class SDFSClientWorker extends Thread {
+    private Member target;
+    private GroupMessage send_msg;
+    private GroupMessage rcv_msg;
+    SDFSClientWorker(Member target, GroupMessage send_msg) {
+      this.target = target;
+      this.send_msg = send_msg;
+    }
+
+    public GroupMessage getRcvMsg() {
+      return rcv_msg;
+    }
+
+    public void run() {
+      try {
+	Socket sock = new Socket(target.getIp(), target.getPort());
+	InputStream sock_in = sock.getInputStream();
+	OutputStream sock_out = sock.getOutputStream();
+	send_msg.writeDelimitedTo(sock_out);
+	sock_out.flush();
+	rcv_msg = GroupMessage.parseDelimitedFrom(sock_in);
+	sock_out.close();
+	sock_in.close();
+	sock.close();
+      } catch (UnknownHostException ex) {
+	System.out.println(ex.getMessage());
+      } catch (IOException ex) {
+	System.out.println(ex.getMessage());
       }
-      public void run() {
-	try {
-	  Socket sock = new Socket(master.getIp(), master.getPort());
-	  InputStream sock_in = sock.getInputStream();
-	  OutputStream sock_out = sock.getOutputStream();
-	  GroupMessage.newBuilder()
-	    .setTarget(master)
-	    .setAction(action)
-	    .setFileContent(fileContent)
-	    .setFileName(fileName)
-	    .build()
-	    .writeDelimitedTo(sock_out);
-	  sock_out.flush();
-	  GroupMessage msg = GroupMessage.parseDelimitedFrom(sock_in);
-	  switch (msg.getAction()) {
-	    case FILE_OK:
-	      System.out.println("Successfully sent the file " + fileName);
-	      break;
-	    case FILE_ERROR:
-	      System.out.println("Error sending the file " + fileName);
-	      break;
-	    default:
-	      System.out.println("Received Unknown action " + msg.getAction().name());
-	      break;
-	  }
-	  sock_out.close();
-	  sock_in.close();
-	  sock.close();
-	} catch (UnknownHostException ex) {
-	  System.out.println(ex.getMessage());
-	} catch (IOException ex) {
-	  System.out.println(ex.getMessage());
-	}
-      }
-    }.init(master, action, file_name, file_content).start();
+    }
   }
 
+  private GroupMessage sendMessage(Member target, GroupMessage msg) {
+    SDFSClientWorker worker = new SDFSClientWorker(target, msg);
+    worker.start();
+    try {
+      worker.join();
+    } catch (InterruptedException ex) {
+      System.out.println(ex.getMessage());
+    }
+    return worker.getRcvMsg();
+  }
 
   public static void main(String[] args) {
     if (args.length < 2) {
