@@ -23,6 +23,7 @@ message GroupMessage {
     DELETE_FILE = 10;
     FILE_OK = 11;
     FILE_ERROR = 12;
+    PUSH_FILE = 13;
   }
   required Action action = 2 [default = TARGET_HEARTBEATS];
   repeated Member member = 3;

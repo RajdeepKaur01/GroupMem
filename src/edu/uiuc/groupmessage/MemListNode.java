@@ -1,6 +1,9 @@
 package edu.uiuc.groupmessage;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,6 +14,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
+
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -36,6 +40,7 @@ class MemListNode {
   private Timer heartbeatClientTimer;
   private Timer detectorTimer;
   private long heartbeatTimestamp;
+  private String dirPath;
   private final Logger LOGGER = Logger.getLogger(MemListNode.class.getName());
   MemListNode(Member current_member, Member portal_member) {
     currentMember = current_member;
@@ -47,8 +52,10 @@ class MemListNode {
     detectorTimer = null;
     setHeartbeatTimestamp(-1);
     try {
-      FileHandler fileTxt = new FileHandler(
-	"/tmp/" + current_member.getIp() + "_" + current_member.getPort() + ".log");
+      dirPath = "/tmp/" + currentMember.getIp() + "_" + currentMember.getPort();
+      File file_dir = new File(dirPath);
+      file_dir.mkdirs();
+      FileHandler fileTxt = new FileHandler(dirPath + "/log");
       fileTxt.setFormatter(new SimpleFormatter());
       LOGGER.addHandler(fileTxt);
     } catch (IOException ex) {
@@ -111,6 +118,8 @@ class MemListNode {
       return handleGetFileLocation(msg.getFileName());
     case PUT_FILE:
       return handlePutFile(msg.getFileName(), msg.getFileContent());
+    case PUSH_FILE:
+      return handlePushFile(msg.getFileName(), msg.getFileContent());
     default:
       LOGGER.info("Unknown message action " + msg.getAction().name());
       break;
@@ -125,15 +134,35 @@ class MemListNode {
 	.setAction(GroupMessage.Action.FILE_ERROR)
 	.build();
     }
-    LOGGER.warning("Received query for the file " + file_name);
-    return GroupMessage.newBuilder()
-	    .setTarget(currentMember)
-	    .setAction(GroupMessage.Action.FILE_LOCATION)
-	    .build();
+    synchronized(memberList) {
+      int index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
+      LOGGER.warning("Received query for the file " + file_name);
+      return GroupMessage.newBuilder()
+	      .setTarget(memberList.get(index))
+	      .setAction(GroupMessage.Action.FILE_LOCATION)
+	      .build();
+    }
+  }
+
+  public GroupMessage handlePushFile(String file_name, ByteString file_content) {
+    // TODO
+    return null;
   }
 
   public GroupMessage handlePutFile(String file_name, ByteString file_content) {
     LOGGER.warning("Received file " + file_name + " of size " + file_content.size());
+
+    // Save the file
+    try {
+      File saved_file = new File(dirPath + "/" + file_name);
+      FileOutputStream file_out = new FileOutputStream(saved_file);
+      file_out.write(file_content.toByteArray());
+      file_out.flush();
+      file_out.close();
+    } catch (Exception ex) {
+      System.out.println(ex.getMessage());
+    }
+
     return GroupMessage.newBuilder()
 	    .setTarget(currentMember)
 	    .setAction(GroupMessage.Action.FILE_OK)

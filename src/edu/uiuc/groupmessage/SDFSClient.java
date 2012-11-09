@@ -67,8 +67,10 @@ class SDFSClient extends Thread {
     }
 
     // Prepare for the PUT_FILE message
+    Member target = rcv_msg.getTarget();
+    System.out.println("Sending file to " + target.getIp() + "_" + target.getPort());
     send_msg = GroupMessage.newBuilder()
-      .setTarget(rcv_msg.getTarget())
+      .setTarget(target)
       .setAction(GroupMessage.Action.PUT_FILE)
       .setFileContent(file_data)
       .setFileName(sdfs_name)
