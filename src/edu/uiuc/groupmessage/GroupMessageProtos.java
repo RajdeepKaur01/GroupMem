@@ -584,9 +584,13 @@ public final class GroupMessageProtos {
       PUT_FILE(8, 8),
       GET_FILE(9, 9),
       DELETE_FILE(10, 10),
-      FILE_OK(11, 11),
-      FILE_ERROR(12, 12),
-      PUSH_FILE(13, 13),
+      DELETE_REPLICA(11, 11),
+      FILE_OK(12, 12),
+      FILE_ERROR(13, 13),
+      PUSH_FILE(14, 14),
+      FILE_NOT_EXIST(15, 15),
+      FILE_EXIST(16, 16),
+      CHECK_FILE_EXIST(17, 17),
       ;
       
       public static final int JOIN_REQUEST_VALUE = 0;
@@ -600,9 +604,13 @@ public final class GroupMessageProtos {
       public static final int PUT_FILE_VALUE = 8;
       public static final int GET_FILE_VALUE = 9;
       public static final int DELETE_FILE_VALUE = 10;
-      public static final int FILE_OK_VALUE = 11;
-      public static final int FILE_ERROR_VALUE = 12;
-      public static final int PUSH_FILE_VALUE = 13;
+      public static final int DELETE_REPLICA_VALUE = 11;
+      public static final int FILE_OK_VALUE = 12;
+      public static final int FILE_ERROR_VALUE = 13;
+      public static final int PUSH_FILE_VALUE = 14;
+      public static final int FILE_NOT_EXIST_VALUE = 15;
+      public static final int FILE_EXIST_VALUE = 16;
+      public static final int CHECK_FILE_EXIST_VALUE = 17;
       
       
       public final int getNumber() { return value; }
@@ -620,9 +628,13 @@ public final class GroupMessageProtos {
           case 8: return PUT_FILE;
           case 9: return GET_FILE;
           case 10: return DELETE_FILE;
-          case 11: return FILE_OK;
-          case 12: return FILE_ERROR;
-          case 13: return PUSH_FILE;
+          case 11: return DELETE_REPLICA;
+          case 12: return FILE_OK;
+          case 13: return FILE_ERROR;
+          case 14: return PUSH_FILE;
+          case 15: return FILE_NOT_EXIST;
+          case 16: return FILE_EXIST;
+          case 17: return CHECK_FILE_EXIST;
           default: return null;
         }
       }
@@ -653,7 +665,7 @@ public final class GroupMessageProtos {
       }
       
       private static final Action[] VALUES = {
-        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, GET_FILE_LOCATION, FILE_LOCATION, PUT_FILE, GET_FILE, DELETE_FILE, FILE_OK, FILE_ERROR, PUSH_FILE, 
+        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, GET_FILE_LOCATION, FILE_LOCATION, PUT_FILE, GET_FILE, DELETE_FILE, DELETE_REPLICA, FILE_OK, FILE_ERROR, PUSH_FILE, FILE_NOT_EXIST, FILE_EXIST, CHECK_FILE_EXIST, 
       };
       
       public static Action valueOf(
@@ -1591,19 +1603,21 @@ public final class GroupMessageProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\023group_message.proto\"5\n\006Member\022\n\n\002ip\030\001 " +
-      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\246\003\n" +
+      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\364\003\n" +
       "\014GroupMessage\022\027\n\006target\030\001 \002(\0132\007.Member\0227" +
       "\n\006action\030\002 \002(\0162\024.GroupMessage.Action:\021TA" +
       "RGET_HEARTBEATS\022\027\n\006member\030\003 \003(\0132\007.Member" +
       "\022\024\n\014file_content\030\004 \001(\014\022\021\n\tfile_name\030\005 \001(" +
-      "\t\"\201\002\n\006Action\022\020\n\014JOIN_REQUEST\020\000\022\024\n\020RESET_" +
+      "\t\"\317\002\n\006Action\022\020\n\014JOIN_REQUEST\020\000\022\024\n\020RESET_" +
       "MEMBERLIST\020\001\022\020\n\014TARGET_JOINS\020\002\022\021\n\rTARGET" +
       "_LEAVES\020\003\022\020\n\014TARGET_FAILS\020\004\022\025\n\021TARGET_HE" +
       "ARTBEATS\020\005\022\025\n\021GET_FILE_LOCATION\020\006\022\021\n\rFIL",
       "E_LOCATION\020\007\022\014\n\010PUT_FILE\020\010\022\014\n\010GET_FILE\020\t" +
-      "\022\017\n\013DELETE_FILE\020\n\022\013\n\007FILE_OK\020\013\022\016\n\nFILE_E" +
-      "RROR\020\014\022\r\n\tPUSH_FILE\020\rB+\n\025edu.uiuc.groupm" +
-      "essageB\022GroupMessageProtos"
+      "\022\017\n\013DELETE_FILE\020\n\022\022\n\016DELETE_REPLICA\020\013\022\013\n" +
+      "\007FILE_OK\020\014\022\016\n\nFILE_ERROR\020\r\022\r\n\tPUSH_FILE\020" +
+      "\016\022\022\n\016FILE_NOT_EXIST\020\017\022\016\n\nFILE_EXIST\020\020\022\024\n" +
+      "\020CHECK_FILE_EXIST\020\021B+\n\025edu.uiuc.groupmes" +
+      "sageB\022GroupMessageProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

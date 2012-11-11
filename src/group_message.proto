@@ -21,9 +21,13 @@ message GroupMessage {
     PUT_FILE = 8;
     GET_FILE = 9;
     DELETE_FILE = 10;
-    FILE_OK = 11;
-    FILE_ERROR = 12;
-    PUSH_FILE = 13;
+    DELETE_REPLICA = 11;
+    FILE_OK = 12;
+    FILE_ERROR = 13;
+    PUSH_FILE = 14;
+    FILE_NOT_EXIST = 15;
+    FILE_EXIST = 16;
+    CHECK_FILE_EXIST = 17;
   }
   required Action action = 2 [default = TARGET_HEARTBEATS];
   repeated Member member = 3;
