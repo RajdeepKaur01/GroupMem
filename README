@@ -18,8 +18,8 @@ Example
 ========
 Run the following command in the respective machines
 java -Xmx3g -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 7711 130.126.112.146 7711
-java -Xmx3g -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 7722 130.126.112.148 7711
-java -Xmx3g -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 7733 130.126.112.117 7711
+java -Xmx3g -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 7722 130.126.112.146 7711
+java -Xmx3g -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 7733 130.126.112.146 7711
 java -Xmx3g -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode 7744 130.126.112.146 7711
 
 java -Xmx3g -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.SDFSClient 130.126.112.146 7711
