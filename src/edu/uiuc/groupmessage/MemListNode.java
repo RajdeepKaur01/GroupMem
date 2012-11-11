@@ -131,7 +131,7 @@ class MemListNode {
 		case DELETE_FILE:
 			return handleDeleteFile(msg.getFileName());
 		case DELETE_REPLICA:
-			 handleDeleteReplica(msg.getFileName());
+			handleDeleteReplica(msg.getFileName());
 			break;
 		default:
 			LOGGER.info("Unknown message action " + msg.getAction().name());
@@ -139,7 +139,7 @@ class MemListNode {
 		}
 		return null;
 	}
-	
+
 	public GroupMessage handleCheckFileExist(String file_name) {
 		LOGGER.info("Checking for file " + file_name + " of size ");
 		File saved_file = null;
@@ -169,7 +169,7 @@ class MemListNode {
 		}
 		synchronized(memberList) {
 			int index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
-			LOGGER.warning("Received query for the file " + file_name);
+			LOGGER.info("Received query for the file " + file_name);
 			return GroupMessage.newBuilder()
 					.setTarget(memberList.get(index))
 					.setAction(GroupMessage.Action.FILE_LOCATION)
@@ -185,7 +185,7 @@ class MemListNode {
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
 		}
-		LOGGER.warning("Deleted file " + file_name);
+		LOGGER.info("Deleted replica of file " + file_name);
 	}
 
 	public GroupMessage handleDeleteFile(String file_name) {
@@ -198,7 +198,7 @@ class MemListNode {
 		} catch (Exception ex) {
 			System.out.println(ex.getMessage());
 		}
-		LOGGER.warning("Deleted file " + file_name);
+		LOGGER.info("Deleted file " + file_name);
 
 		// Initiate Replica deletion
 		deleteReplica(file_name);
@@ -216,7 +216,7 @@ class MemListNode {
 					.build();		 
 		}
 	}
-	
+
 	private void deleteReplica(String file_name){
 		// Delete the replica as well
 		// Initiate replica deletion and return
@@ -224,11 +224,10 @@ class MemListNode {
 		synchronized(memberList) {
 			index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
 			index = (int) ((index + 1) % memberList.size());
-			LOGGER.warning("Received query for the file " + file_name);
 		}
 		// Prepare for the DELETE_REPLICA message
 		Member target = memberList.get(index);
-		LOGGER.info("Pushing file to " + target.getIp() + "_" + target.getPort());
+		LOGGER.info("Deleting replica of file " + file_name + "at " + target.getIp() + "_" + target.getPort());
 		GroupMessage send_msg = GroupMessage.newBuilder()
 				.setTarget(target)
 				.setAction(GroupMessage.Action.DELETE_REPLICA)
@@ -239,7 +238,7 @@ class MemListNode {
 	}
 
 	public void handlePushFile(String file_name, ByteString file_content) {
-		LOGGER.warning("Received file " + file_name + " of size " + file_content.size());
+		LOGGER.info("Received file " + file_name + " of size " + file_content.size());
 		// Save the file
 		try {
 			File saved_file = new File(dirPath + "/" + file_name);
@@ -268,7 +267,7 @@ class MemListNode {
 
 	public GroupMessage handleGetFile(String file_name) {
 		ByteString file_data = null;
-		
+
 		File file = new File(dirPath + "/" + file_name);
 		if(!file.exists())
 		{
@@ -284,7 +283,7 @@ class MemListNode {
 			System.out.println(ex.getMessage());
 		}
 
-		LOGGER.warning("Sending file " + file_name + " of size " + file_data.size());
+		LOGGER.info("Sending file " + file_name + " of size " + file_data.size());
 
 		return GroupMessage.newBuilder()
 				.setTarget(currentMember)
@@ -294,7 +293,7 @@ class MemListNode {
 	}
 
 	public GroupMessage handlePutFile(String file_name, ByteString file_content) {
-		LOGGER.warning("Received file " + file_name + " of size " + file_content.size());
+		LOGGER.info("Received file " + file_name + " of size " + file_content.size());
 
 		// Save the file
 		try {
@@ -398,7 +397,7 @@ class MemListNode {
 		}
 
 		handleFilesRecovery();
-		
+
 		// Restart heartbeating
 		startHeartbeatClient();
 		startFailureDetector();
@@ -412,9 +411,9 @@ class MemListNode {
 		if (!removeMember(loser)) {
 			LOGGER.severe("Somebody fails but he/she is not on the list");
 		}
-		
+
 		handleFilesRecovery();
-		
+
 		// Restart heartbeating and failure detection
 		startHeartbeatClient();
 		startFailureDetector();
@@ -425,6 +424,10 @@ class MemListNode {
 		// Check files and push them if not existing at required nodes
 		File directory = new File(dirPath);
 		File[] files = directory.listFiles();
+
+		// Maximum number of push worker threads possible
+		MemListNodeWorker worker[] = new MemListNodeWorker[files.length * 2];
+		int j=0;
 		for(File file:files) {
 			String file_name = file.getName();
 			// Initiate replication and return - let replication happen passively
@@ -432,11 +435,9 @@ class MemListNode {
 			synchronized(memberList) {
 				index1 = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
 				index2 = (int) ((index1 + 1) % memberList.size());
-				LOGGER.warning("Received query for the file " + file_name);
 			}
-			
+
 			ByteString file_content = null;
-			
 			Member target[] = new Member[2];
 			target[0] = memberList.get(index1);
 			target[1] = memberList.get(index2);
@@ -444,10 +445,10 @@ class MemListNode {
 			{
 				// Continue is the file belongs to this node
 				if((target[i].getIp().equals(currentMember.getIp()) == true)
-			    && (target[i].getPort() == currentMember.getPort())){
+						&& (target[i].getPort() == currentMember.getPort())){
 					continue;
 				}
-				LOGGER.info("Checking for file" + file_name);
+				LOGGER.info("Checking for file" + file_name + " at " + target[i].getIp() + "_" + target[i].getPort() );
 				// Check if file exists at target
 				GroupMessage send_msg = GroupMessage.newBuilder()
 						.setTarget(target[i])
@@ -456,7 +457,7 @@ class MemListNode {
 						.build();        
 				GroupMessage rcv_msg = sendMessage(target[i], send_msg);	
 				if(rcv_msg.getAction() != GroupMessage.Action.FILE_EXIST){
-					LOGGER.info("File does not exist" + file_name);	
+					LOGGER.info("File " + file_name + "does not exist at " +target[i].getIp() + "_" + target[i].getPort());	
 					// Push file if file does not exist at target
 					if(file_content == null){
 						// Read file content from the file
@@ -470,14 +471,28 @@ class MemListNode {
 								.setFileContent(file_content)
 								.setFileName(file_name)
 								.build();
-						MemListNodeWorker worker = new MemListNodeWorker(target[i],send_msg);
-						worker.start();
+						worker[j] = new MemListNodeWorker(target[i],send_msg);
+						worker[j].start();
+						j++;
 					}
-				}			
+				}
+				else {
+					LOGGER.info("File " + file_name + "exists at " +target[i].getIp() + "_" + target[i].getPort());
+				}
 			}
 		}	
+
+		for(int k=0;k<j;k++){
+			try{
+				worker[j].join();
+			}
+			catch (Exception ex) {
+				System.out.println(ex.getMessage());
+			}
+		}
+		LOGGER.info("Success: File Recovery completed!");
 	}
-	
+
 	public void broadcastTargetJoin(Member joiner) {
 		GroupMessage msg = GroupMessage.newBuilder()
 				.setTarget(joiner)
@@ -627,7 +642,7 @@ class MemListNode {
 
 	public static String getCurrentIp() {
 		try {
-			NetworkInterface nif = NetworkInterface.getByName("eth0");
+			NetworkInterface nif = NetworkInterface.getByName("wlan0");
 			Enumeration<InetAddress> addrs = nif.getInetAddresses();
 			while (addrs.hasMoreElements()) {
 				InetAddress addr = addrs.nextElement();
