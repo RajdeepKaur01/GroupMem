@@ -26,7 +26,7 @@ class MemListServerWorker extends Thread {
       GroupMessage msg = GroupMessage.parseDelimitedFrom(sock_in);
 
       // Print the message content
-      if (msg.getAction() != GroupMessage.Action.PUT_FILE) {
+      if (msg.getAction() != GroupMessage.Action.PUT_FILE && msg.getAction() != GroupMessage.Action.PUSH_FILE) {
 	System.out.println(msg.toString());
       }
 

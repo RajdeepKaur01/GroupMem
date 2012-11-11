@@ -312,7 +312,6 @@ class MemListNode {
 		synchronized(memberList) {
 			index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
 			index = (int) ((index + 1) % memberList.size());
-			LOGGER.warning("Received query for the file " + file_name);
 		}
 		// Prepare for the PUSH_FILE message
 		Member target = memberList.get(index);
@@ -628,7 +627,7 @@ class MemListNode {
 
 	public static String getCurrentIp() {
 		try {
-			NetworkInterface nif = NetworkInterface.getByName("wlan0");
+			NetworkInterface nif = NetworkInterface.getByName("eth0");
 			Enumeration<InetAddress> addrs = nif.getInetAddresses();
 			while (addrs.hasMoreElements()) {
 				InetAddress addr = addrs.nextElement();
