@@ -90,11 +90,11 @@ class MemListNode {
     return heartbeatTo;
   }
 
-  synchronized public void setHeartbeatTimestamp(long timestamp) {
-    heartbeatTimestamp = timestamp;
+  public void setHeartbeatTimestamp(long timestamp) {
+      heartbeatTimestamp = timestamp;
   }
 
-  synchronized public long getHeartbeatTimestamp() {
+  public long getHeartbeatTimestamp() {
     return heartbeatTimestamp;
   }
 
