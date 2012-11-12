@@ -44,6 +44,7 @@ class MemListNode {
   private Timer detectorTimer;
   private long heartbeatTimestamp;
   private String dirPath;
+  private FileServer fileServer;
   private final Logger LOGGER = Logger.getLogger(MemListNode.class.getName());
   MemListNode(Member current_member, Member portal_member) {
     currentMember = current_member;
@@ -65,7 +66,8 @@ class MemListNode {
       System.err.println("Log file cannot be created");
       System.exit(-1);
     }
-    //LOGGER.addHandler(new ConsoleHandler());
+    fileServer = new FileServer(this);
+    fileServer.start();
   }
 
   public void runServer() {
@@ -88,6 +90,10 @@ class MemListNode {
 
   public Member getHeartbeatTo() {
     return heartbeatTo;
+  }
+
+  public String getDirPath() {
+    return dirPath;
   }
 
   public void setHeartbeatTimestamp(long timestamp) {
@@ -122,11 +128,11 @@ class MemListNode {
     case CHECK_FILE_EXIST:
       return handleCheckFileExist(msg.getFileName());
     case PUT_FILE:
-      return handlePutFile(msg.getFileName(), msg.getFileContent());
+      //return handlePutFile(msg.getFileName(), msg.getFileContent());
     case GET_FILE:
       return handleGetFile(msg.getFileName());
     case PUSH_FILE:
-      handlePushFile(msg.getFileName(), msg.getFileContent());
+      //handlePushFile(msg.getFileName(), msg.getFileContent());
       break;
     case DELETE_FILE:
       return handleDeleteFile(msg.getFileName());
@@ -237,19 +243,9 @@ class MemListNode {
     worker.start();
   }
 
-  public void handlePushFile(String file_name, ByteString file_content) {
-    LOGGER.info("Received file " + file_name + " of size " + file_content.size());
-    // Save the file
-    try {
-      File saved_file = new File(dirPath + "/" + file_name);
-      FileOutputStream file_out = new FileOutputStream(saved_file);
-      file_out.write(file_content.toByteArray());
-      file_out.flush();
-      file_out.close();
-    } catch (Exception ex) {
-      System.out.println(ex.getMessage());
-    }
-    LOGGER.info("Replica of file " + file_name + " saved successfully");
+  public void handlePushFile(String file_name) {
+    File saved_file = new File(dirPath + "/" + file_name);
+    LOGGER.info("Received file " + file_name + " of size " + saved_file.length());
   }
 
   private ByteString readFile(String local_name) {
@@ -293,44 +289,62 @@ class MemListNode {
       .build();
   }
 
-  public GroupMessage handlePutFile(String file_name, ByteString file_content) {
-    LOGGER.info("Received file " + file_name + " of size " + file_content.size());
-
-    // Save the file
-    try {
+    public void handlePutFile(String file_name) {
       File saved_file = new File(dirPath + "/" + file_name);
-      FileOutputStream file_out = new FileOutputStream(saved_file);
-      file_out.write(file_content.toByteArray());
-      file_out.flush();
-      file_out.close();
-    } catch (Exception ex) {
-      System.out.println(ex.getMessage());
+      LOGGER.info("Received file " + file_name + " of size " + saved_file.length());
+
+      // Initiate replication and return - let replication happen passively
+      int index;
+      Member target;
+      synchronized(memberList) {
+	index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
+	index = (int) ((index + 1) % memberList.size());
+	target = memberList.get(index);
+      }
+      
+      // Prepare for the PUSH_FILE
+      LOGGER.info("Pushing file to " + target.getIp() + "_" + target.getPort());
+      FileClient client = new FileClient(target, file_name, saved_file, GroupMessage.Action.PUSH_FILE_VALUE);
+      client.start();
     }
 
-    // Initiate replication and return - let replication happen passively
-    int index;
-    synchronized(memberList) {
-      index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
-      index = (int) ((index + 1) % memberList.size());
-    }
-    // Prepare for the PUSH_FILE message
-    Member target = memberList.get(index);
-    LOGGER.info("Pushing file" + file_name + " to " + target.getIp() + "_" + target.getPort());
-    GroupMessage send_msg = GroupMessage.newBuilder()
-      .setTarget(target)
-      .setAction(GroupMessage.Action.PUSH_FILE)
-      .setFileContent(file_content)
-      .setFileName(file_name)
-      .build();
-    MemListNodeWorker worker = new MemListNodeWorker(target,send_msg);
-    worker.start();
-
-    LOGGER.info("File " + file_name + " saved successfully");
-    return GroupMessage.newBuilder()
-      .setTarget(currentMember)
-      .setAction(GroupMessage.Action.FILE_OK)
-      .build();
-  }
+//  public GroupMessage handlePutFile(String file_name, ByteString file_content) {
+//    LOGGER.info("Received file " + file_name + " of size " + file_content.size());
+//
+//    // Save the file
+//    try {
+//      File saved_file = new File(dirPath + "/" + file_name);
+//      FileOutputStream file_out = new FileOutputStream(saved_file);
+//      file_out.write(file_content.toByteArray());
+//      file_out.flush();
+//      file_out.close();
+//    } catch (Exception ex) {
+//      System.out.println(ex.getMessage());
+//    }
+//
+//    // Initiate replication and return - let replication happen passively
+//    int index;
+//    synchronized(memberList) {
+//      index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
+//      index = (int) ((index + 1) % memberList.size());
+//    }
+//    // Prepare for the PUSH_FILE message
+//    Member target = memberList.get(index);
+//    LOGGER.info("Pushing file to " + target.getIp() + "_" + target.getPort());
+//    GroupMessage send_msg = GroupMessage.newBuilder()
+//      .setTarget(target)
+//      .setAction(GroupMessage.Action.PUSH_FILE)
+//      .setFileContent(file_content)
+//      .setFileName(file_name)
+//      .build();
+//    MemListNodeWorker worker = new MemListNodeWorker(target,send_msg);
+//    worker.start();
+//
+//    return GroupMessage.newBuilder()
+//      .setTarget(currentMember)
+//      .setAction(GroupMessage.Action.FILE_OK)
+//      .build();
+//  }
 
   public void handleHeartbeats(Member sender) {
     //LOGGER.info("Received heartbeat from node " + memberToID(sender));
