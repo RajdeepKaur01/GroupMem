@@ -167,23 +167,6 @@ class SDFSClient extends Thread {
     } catch (Exception ex) {
       System.out.println(ex.getMessage());
     }
-
-    // check the response
-    switch (client.getResult().getAction()) {
-    case FILE_OK:
-      System.out.println("Successfully read the file " + local_name);
-      break;
-    case FILE_ERROR:
-      System.out.println("Error reading the file " + local_name);
-      break;
-    case FILE_NOT_EXIST:
-      System.out.println("File does not exist " + local_name);
-      break;
-    case FILE_LOCATION:
-    default:
-      System.out.println("Received Unknown action " + rcv_msg.getAction().name());
-      break;
-    }
   }
 
 
