@@ -331,7 +331,7 @@ class MemListNode {
   }
 
   public void handleHeartbeats(Member sender) {
-    //LOGGER.info("Received heartbeat from node " + memberToID(sender));
+    LOGGER.info("Received heartbeat from node " + memberToID(sender));
     if (heartbeatFrom != null && heartbeatFrom.equals(sender)) {
       long time = System.currentTimeMillis();
       //LOGGER.info("Update "
