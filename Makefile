@@ -53,7 +53,8 @@ CLASSES = \
 	HeartbeatServer.java \
 	HeartbeatClient.java \
 	FailureDetector.java \
-	SDFSClient.java
+	SDFSClient.java \
+	FileServer.java
 
 #
 # the default make target entry
