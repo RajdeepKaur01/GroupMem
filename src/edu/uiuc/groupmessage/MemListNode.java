@@ -185,7 +185,7 @@ class MemListNode {
     } catch (Exception ex) {
       System.out.println(ex.getMessage());
     }
-    LOGGER.info("Deleted replica of file " + file_name);
+    LOGGER.info("Deleted replica of file " + file_name + " successfully");
   }
 
   public GroupMessage handleDeleteFile(String file_name) {
@@ -198,7 +198,7 @@ class MemListNode {
     } catch (Exception ex) {
       System.out.println(ex.getMessage());
     }
-    LOGGER.info("Deleted file " + file_name);
+    LOGGER.info("Deleted file " + file_name + " successfully");
 
     // Initiate Replica deletion
     deleteReplica(file_name);
@@ -227,7 +227,7 @@ class MemListNode {
     }
     // Prepare for the DELETE_REPLICA message
     Member target = memberList.get(index);
-    LOGGER.info("Deleting replica of file " + file_name + "at " + target.getIp() + "_" + target.getPort());
+    LOGGER.info("Requesting to delete replica of file " + file_name + " at " + target.getIp() + "_" + target.getPort());
     GroupMessage send_msg = GroupMessage.newBuilder()
       .setTarget(target)
       .setAction(GroupMessage.Action.DELETE_REPLICA)
@@ -249,6 +249,7 @@ class MemListNode {
     } catch (Exception ex) {
       System.out.println(ex.getMessage());
     }
+    LOGGER.info("Replica of file " + file_name + " saved successfully");
   }
 
   private ByteString readFile(String local_name) {
@@ -314,7 +315,7 @@ class MemListNode {
     }
     // Prepare for the PUSH_FILE message
     Member target = memberList.get(index);
-    LOGGER.info("Pushing file to " + target.getIp() + "_" + target.getPort());
+    LOGGER.info("Pushing file" + file_name + " to " + target.getIp() + "_" + target.getPort());
     GroupMessage send_msg = GroupMessage.newBuilder()
       .setTarget(target)
       .setAction(GroupMessage.Action.PUSH_FILE)
@@ -324,6 +325,7 @@ class MemListNode {
     MemListNodeWorker worker = new MemListNodeWorker(target,send_msg);
     worker.start();
 
+    LOGGER.info("File " + file_name + " saved successfully");
     return GroupMessage.newBuilder()
       .setTarget(currentMember)
       .setAction(GroupMessage.Action.FILE_OK)
@@ -421,6 +423,7 @@ class MemListNode {
 
   private void handleFilesRecovery()
   {
+    LOGGER.info("Start File Recovery");
     // Check files and push them if not existing at required nodes
     File directory = new File(dirPath);
     File[] files = directory.listFiles();
