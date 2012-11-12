@@ -1,5 +1,4 @@
 package edu.uiuc.groupmessage;
-
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
@@ -275,6 +274,8 @@ class SDFSClient extends Thread {
 		
 		try {
 			while (!(str = command_in.readLine()).equals("exit")) {
+				long startTime = System.currentTimeMillis();
+				System.out.println(str);
 				String[] tokens = str.split(" ");
 				if (tokens[0].equals("put") && tokens.length == 3) {
 					client.putFile(tokens[1], tokens[2]);
@@ -289,6 +290,8 @@ class SDFSClient extends Thread {
 				if(args.length < 3){
 					System.out.println("Please enter command:");			
 				}
+				long endTime = System.currentTimeMillis();
+				System.out.println("Time elapsed: "+ (endTime-startTime) + " milli seconds");
 			}
 		} catch (IOException ex) {
 			System.out.println(ex.getMessage());
