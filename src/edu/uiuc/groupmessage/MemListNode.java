@@ -130,7 +130,7 @@ class MemListNode {
     case PUT_FILE:
       //return handlePutFile(msg.getFileName(), msg.getFileContent());
     case GET_FILE:
-      return handleGetFile(msg.getFileName());
+      //return handleGetFile(msg.getFileName());
     case PUSH_FILE:
       //handlePushFile(msg.getFileName(), msg.getFileContent());
       break;
@@ -262,31 +262,9 @@ class MemListNode {
     return ByteString.copyFrom(file_data);
   }
 
-  public GroupMessage handleGetFile(String file_name) {
-    ByteString file_data = null;
-
-    File file = new File(dirPath + "/" + file_name);
-    if(!file.exists())
-    {
-      return GroupMessage.newBuilder()
-	.setTarget(currentMember)
-	.setAction(GroupMessage.Action.FILE_NOT_EXIST)
-	.build();			
-    }
-    try {    
-      // Read file content from the file
-      file_data = readFile(dirPath + "/" + file_name);
-    } catch (Exception ex) {
-      System.out.println(ex.getMessage());
-    }
-
-    LOGGER.info("Sending file " + file_name + " of size " + file_data.size());
-
-    return GroupMessage.newBuilder()
-      .setTarget(currentMember)
-      .setAction(GroupMessage.Action.FILE_OK)
-      .setFileContent(file_data)
-      .build();
+  public void handleGetFile(String file_name) {
+    File saved_file = new File(dirPath + "/" + file_name);
+    LOGGER.info("Sending file " + file_name + " of size " + saved_file.length());
   }
 
     public void handlePutFile(String file_name) {

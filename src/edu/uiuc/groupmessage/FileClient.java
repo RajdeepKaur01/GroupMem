@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.Socket;
 
@@ -33,38 +34,47 @@ class FileClient extends Thread {
 
   public void run() {
     System.out.println("FileClient is up");
-    switch (action) {
-//      case GroupMessage.Action.GET_FILE_VALUE:
-//	BufferedOutputStream file_out = new BufferedOutputStream(new FileOutputStream(file));
-//	break;
-      default:
-	try {
-	  BufferedInputStream file_in = new BufferedInputStream(new FileInputStream(file));
-	  Socket sock = new Socket(receiver.getIp(), receiver.getPort() + 2); 
-	  DataOutputStream sock_out = new DataOutputStream(sock.getOutputStream());
-	  InputStream sock_in = sock.getInputStream();
-	  sock_out.writeInt(action);
-	  char[] chars = fileName.toCharArray();
-	  sock_out.writeInt(chars.length);
-	  sock_out.writeChars(fileName);
-	  sock_out.writeLong(file.length());
-	  int res = 0;
-	  while ((res = file_in.read(buf, 0, buf.length)) != -1) {
-	    sock_out.write(buf, 0, res);
-	  }
-	  sock_out.flush();
-
-	  result = GroupMessage.parseDelimitedFrom(sock_in);
-	  System.out.println(result.toString());
-
-	  // Close I/O
-	  sock_out.close();
-	  file_in.close();
-	  sock.close();
-	} catch (Exception ex) {
-	  System.out.println(ex.getMessage());
+    try {
+      Socket sock = new Socket(receiver.getIp(), receiver.getPort() + 2); 
+      DataOutputStream sock_out = new DataOutputStream(sock.getOutputStream());
+      InputStream sock_in = sock.getInputStream();
+      sock_out.writeInt(action);
+      char[] chars = fileName.toCharArray();
+      sock_out.writeInt(chars.length);
+      sock_out.writeChars(fileName);
+      switch (action) {
+	case GroupMessage.Action.GET_FILE_VALUE:
+	{
+	    FileOutputStream file_out = new FileOutputStream(file);
+	    int res = 0;
+	    while ((res = sock_in.read(buf, 0, buf.length)) != -1) {
+	      file_out.write(buf, 0, res);
+	    }
+	    file_out.close();
+	  break;
 	}
-	break;
+	default:
+	{
+	    BufferedInputStream file_in = new BufferedInputStream(new FileInputStream(file));
+	    sock_out.writeLong(file.length());
+	    int res = 0;
+	    while ((res = file_in.read(buf, 0, buf.length)) != -1) {
+	      sock_out.write(buf, 0, res);
+	    }
+	    sock_out.flush();
+
+	    result = GroupMessage.parseDelimitedFrom(sock_in);
+	    System.out.println(result.toString());
+	    file_in.close();
+	  break;
+	}
+      }
+      // Close I/O
+      sock_in.close();
+      sock_out.close();
+      sock.close();
+    } catch (Exception ex) {
+      System.out.println(ex.getMessage());
     }
     System.out.println("FileClient is down");
   }

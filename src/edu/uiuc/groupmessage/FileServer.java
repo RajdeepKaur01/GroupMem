@@ -3,6 +3,7 @@ package edu.uiuc.groupmessage;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -50,41 +51,67 @@ class FileServer extends Thread {
 	DataInputStream sock_in = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
 	OutputStream sock_out = sock.getOutputStream();
 	action = sock_in.readInt();
-	int name_size = sock_in.readInt();
-	char[] raw_name = new char[name_size];
-	for (int i = 0; i < name_size; i++) {
-	  raw_name[i] = sock_in.readChar();
-	}
-	fileName = String.valueOf(raw_name);
-	long file_size = sock_in.readLong();
-	try {
-	  File saved_file = new File(currentNode.getDirPath() + "/" + fileName);
-	  if (saved_file.exists()) {
-	    saved_file = new File(currentNode.getDirPath() + "/" + fileName + ".bak");
-	  }
-	  FileOutputStream file_out = new FileOutputStream(saved_file);
-	  int res = 0;
-	  while (file_size > 0) {
-	    res = sock_in.read(buf, 0, buf.length);
-	    if (res == -1) {
+	switch (action) {
+	case GroupMessage.Action.GET_FILE_VALUE:
+	  {
+	    int name_size = sock_in.readInt();
+	    char[] raw_name = new char[name_size];
+	    for (int i = 0; i < name_size; i++) {
+	      raw_name[i] = sock_in.readChar();
+	    }
+	    fileName = String.valueOf(raw_name);
+	    File saved_file = new File(currentNode.getDirPath() + "/" + fileName);
+	    if (!saved_file.exists()) {
+	      System.out.println("the file does not exist.");
 	      break;
 	    }
-	    file_out.write(buf, 0, res);
-	    file_size -= res;
+	    FileInputStream file_in = new FileInputStream(saved_file);
+	    int res = 0;
+	    while ((res = file_in.read(buf, 0, buf.length)) != -1) {
+	      sock_out.write(buf, 0, res);
+	    }
+	    file_in.close();
+	    break;
 	  }
-	  file_out.flush();
-	  file_out.close();
+	default:
+	  {
+	    int name_size = sock_in.readInt();
+	    char[] raw_name = new char[name_size];
+	    for (int i = 0; i < name_size; i++) {
+	      raw_name[i] = sock_in.readChar();
+	    }
+	    fileName = String.valueOf(raw_name);
+	    long file_size = sock_in.readLong();
+	    try {
+	      File saved_file = new File(currentNode.getDirPath() + "/" + fileName);
+	      if (saved_file.exists()) {
+		saved_file = new File(currentNode.getDirPath() + "/" + fileName + ".bak");
+	      }
+	      FileOutputStream file_out = new FileOutputStream(saved_file);
+	      int res = 0;
+	      while (file_size > 0) {
+		res = sock_in.read(buf, 0, buf.length);
+		if (res == -1) {
+		  break;
+		}
+		file_out.write(buf, 0, res);
+		file_size -= res;
+	      }
+	      file_out.flush();
+	      file_out.close();
 
-	  // Send back the file reception result
-	  GroupMessage.newBuilder()
-	    .setTarget(currentMember)
-	    .setAction(GroupMessage.Action.FILE_OK)
-	    .build()
-	    .writeDelimitedTo(sock_out);	
-	} catch (Exception ex) {
-	  System.out.println(ex.getMessage());
+	      // Send back the file reception result
+	      GroupMessage.newBuilder()
+		.setTarget(currentMember)
+		.setAction(GroupMessage.Action.FILE_OK)
+		.build()
+		.writeDelimitedTo(sock_out);	
+	    } catch (Exception ex) {
+	      System.out.println(ex.getMessage());
+	    }
+	    break;
+	  }
 	}
-
 
 	// Close I/O
 	sock_out.close();
@@ -112,6 +139,8 @@ class FileServer extends Thread {
 	  case GroupMessage.Action.PUSH_FILE_VALUE:
 	    currentNode.handlePushFile(worker.getFileName());
 	    break;
+	  case GroupMessage.Action.GET_FILE_VALUE:
+	    currentNode.handleGetFile(worker.getFileName());
 	}
       }
       serverSock.close();
