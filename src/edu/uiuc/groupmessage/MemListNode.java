@@ -331,7 +331,7 @@ class MemListNode {
   }
 
   public void handleHeartbeats(Member sender) {
-    LOGGER.info("Received heartbeat from node " + memberToID(sender));
+    //LOGGER.info("Received heartbeat from node " + memberToID(sender));
     if (heartbeatFrom != null && heartbeatFrom.equals(sender)) {
       long time = System.currentTimeMillis();
       //LOGGER.info("Update "
@@ -722,7 +722,7 @@ class MemListNode {
       return;
     }
     long current_time = System.currentTimeMillis();
-    if (current_time - getHeartbeatTimestamp() > 45000) {
+    if (current_time - getHeartbeatTimestamp() > 4500) {
       LOGGER.warning("Detect failure.");
       stopFailureDetector();
       broadcastTargetFail(heartbeatFrom);
