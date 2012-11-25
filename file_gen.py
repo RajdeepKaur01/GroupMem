@@ -2,6 +2,7 @@
 import sys
 if len(sys.argv) < 3:
 	print "Usage: %s <file_name> <file_size(MB)>" % sys.argv[0]
+        exit()
 file = open(sys.argv[1], "w")
 str = 'a'
 for i in range(20):
