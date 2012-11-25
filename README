@@ -8,7 +8,7 @@ just 'make'
 
 Usage
 ========
-java -cp bin:lib/protobuf-java-2.4.1.jar bin:edu.uiuc.groupmessage.MemListNode <listen_port> <portal_ip> <portal_port>
+java -cp bin:lib/protobuf-java-2.4.1.jar edu.uiuc.groupmessage.MemListNode <listen_port> <portal_ip> <portal_port>
 
 Example
 ========
