@@ -28,9 +28,13 @@ message GroupMessage {
     FILE_NOT_EXIST = 15;
     FILE_EXIST = 16;
     CHECK_FILE_EXIST = 17;
+    LIST_FILE_WITH_PREFIX = 18;
+    PULL_FILE_WITH_PREFIX = 19;
+    FILE_LIST = 20;
   }
   required Action action = 2 [default = TARGET_HEARTBEATS];
   repeated Member member = 3;
   optional bytes file_content = 4;
   optional string file_name = 5;
+  repeated string file = 6;
 }

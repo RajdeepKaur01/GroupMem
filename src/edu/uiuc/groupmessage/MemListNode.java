@@ -1,9 +1,7 @@
 package edu.uiuc.groupmessage;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -16,6 +14,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -30,7 +29,6 @@ import java.util.logging.SimpleFormatter;
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 import edu.uiuc.groupmessage.GroupMessageProtos.Member;
 
-import com.google.protobuf.ByteString;
 
 class MemListNode {
   private Member currentMember;
@@ -140,11 +138,57 @@ class MemListNode {
     case DELETE_REPLICA:
       handleDeleteReplica(msg.getFileName());
       break;
+    case LIST_FILE_WITH_PREFIX:
+      return handleListFileWithPrefix(msg.getFileName(), false);
+    case PULL_FILE_WITH_PREFIX:
+      return handleListFileWithPrefix(msg.getFileName(), true);
     default:
       LOGGER.info("Unknown message action " + msg.getAction().name());
       break;
     }
     return null;
+  }
+
+  public GroupMessage handleListFileWithPrefix(String prefix, boolean internal) {
+    LOGGER.warning("Start list file with prefix \"" + prefix + "\"");
+    ArrayList< String > list = new ArrayList< String >();
+
+    // If internal is false, the request is from the SDFSClient
+    // Prepare all the files with the prefix from every node
+    if (!internal) {
+      GroupMessage send_msg = GroupMessage.newBuilder()
+        .setTarget(currentMember)
+        .setAction(GroupMessage.Action.PULL_FILE_WITH_PREFIX)
+        .setFileName(prefix)
+        .build();
+      for (Member member : memberList) {
+        if (!member.equals(currentMember)) {
+          GroupMessage rcv_msg = sendMessageWaitResponse(member, send_msg);
+          list.addAll(rcv_msg.getFileList());
+        }
+      }
+    }
+
+    // Prepare the files with the prefix for current node
+    File directory = new File(dirPath);
+    File[] files = directory.listFiles();
+    for (File file : files) {
+      String file_name = file.getName();
+      if (file_name.startsWith(prefix)) {
+        int index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
+        if (memberList.get(index).equals(currentMember)) {
+          list.add(file_name);
+        }
+      }
+    }
+
+    LOGGER.warning("Sending the file list back");
+    // Send the file list back
+    return GroupMessage.newBuilder()
+      .setTarget(currentMember)
+      .setAction(GroupMessage.Action.FILE_LIST)
+      .addAllFile(list)
+      .build();
   }
 
   public GroupMessage handleCheckFileExist(String file_name) {

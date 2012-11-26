@@ -72,6 +72,32 @@ class SDFSClient extends Thread {
     }
   }
 
+  public void listFileWithPrefix(String prefix) {
+    
+    if (prefix == null) {
+      return;
+    }
+
+    // Prepare the request message
+    GroupMessage send_msg = GroupMessage.newBuilder()
+      .setTarget(master)
+      .setAction(GroupMessage.Action.LIST_FILE_WITH_PREFIX)
+      .setFileName(prefix)
+      .build();
+
+    // Get the result
+    GroupMessage rcv_msg = sendMessage(master, send_msg);
+    if (rcv_msg.getAction() != GroupMessage.Action.FILE_LIST) {
+      System.out.println("Failed to list files with prefix " + prefix);
+      return;
+    }
+
+    // Print out the result
+    for (String name : rcv_msg.getFileList()) {
+      System.out.println(name);
+    }
+  }
+
   public void putFile(String local_name, String sdfs_name) {
     GroupMessage send_msg, rcv_msg;
     if (local_name == null || sdfs_name == null) {
@@ -138,10 +164,10 @@ class SDFSClient extends Thread {
 
     // send the GET_FILE_LOCATION message to the master
     rcv_msg = sendMessage(master, send_msg);
-//    if (rcv_msg.getAction() != GroupMessage.Action.FILE_LOCATION) {
-//      System.out.println("File does not exist in SDFS");
-//      return;
-//    }
+    if (rcv_msg.getAction() != GroupMessage.Action.FILE_LOCATION) {
+      System.out.println("File does not exist in SDFS");
+      return;
+    }
 
     // Start to get the file from the returned node
     Member target = rcv_msg.getTarget();
@@ -242,6 +268,8 @@ class SDFSClient extends Thread {
 	  client.getFile(tokens[1], tokens[2]);
 	} else if (tokens[0].equals("delete") && tokens.length == 2) {
 	  client.deleteFile(tokens[1]);
+        } else if (tokens[0].equals("list") && tokens.length == 2) {
+          client.listFileWithPrefix(tokens[1]);
 	} else {
 	  System.out.println("Invalid command!");
 	  continue;
