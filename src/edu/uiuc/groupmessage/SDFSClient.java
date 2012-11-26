@@ -1,4 +1,5 @@
 package edu.uiuc.groupmessage;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,6 +11,8 @@ import java.io.OutputStream;
 
 import java.net.Socket;
 import java.net.UnknownHostException;
+
+import java.util.Arrays;
 
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 import edu.uiuc.groupmessage.GroupMessageProtos.Member;
@@ -235,53 +238,52 @@ class SDFSClient extends Thread {
     return worker.getRcvMsg();
   }
 
+  public void runCommand(String[] tokens) {
+    long startTime = System.currentTimeMillis();
+    if (tokens[0].equals("put") && tokens.length == 3) {
+      putFile(tokens[1], tokens[2]);
+    } else if (tokens[0].equals("get") && tokens.length == 3) {
+      getFile(tokens[1], tokens[2]);
+    } else if (tokens[0].equals("delete") && tokens.length == 2) {
+      deleteFile(tokens[1]);
+    } else if (tokens[0].equals("list") && tokens.length == 2) {
+      listFileWithPrefix(tokens[1]);
+    } else {
+      System.out.println("Invalid command!");
+    }
+    long endTime = System.currentTimeMillis();
+    //System.out.println("Time elapsed: "+ (endTime-startTime) + " milli seconds");
+  }
+
   public static void main(String[] args) throws FileNotFoundException {
     if (args.length < 2) {
       System.out.println("Usage: java edu.uiuc.groupmessage.SDFSClient <master IP> <master port>");
+      System.out.println("Usage: java edu.uiuc.groupmessage.SDFSClient <master IP> <master port> put <local_file> <remote_file>");
+      System.out.println("Usage: java edu.uiuc.groupmessage.SDFSClient <master IP> <master port> get <remote_file> <local_file>");
+      System.out.println("Usage: java edu.uiuc.groupmessage.SDFSClient <master IP> <master port> delete <remote_file>");
+      System.out.println("Usage: java edu.uiuc.groupmessage.SDFSClient <master IP> <master port> list <name_prefix>");
       System.exit(-1);
     }
-    SDFSClient client = new SDFSClient(args[0], Integer.parseInt(args[1]));
-    InputStream file_in = null;
     BufferedReader command_in = null;
+    SDFSClient client = new SDFSClient(args[0], Integer.parseInt(args[1]));
 
-    if(args.length == 3){
-      file_in = new FileInputStream(args[2]);
-      command_in = new BufferedReader(new InputStreamReader(file_in));	
-    }
-    else {
+    if(args.length == 2) {
+      // Interactive Mode
       command_in = new BufferedReader(new InputStreamReader(System.in));			
-    }
-
-    String str;
-    if(args.length < 3){
       System.out.println("Please enter command:");			
-    }
-
-    try {
-      while (!(str = command_in.readLine()).equals("exit")) {
-	long startTime = System.currentTimeMillis();
-	System.out.println(str);
-	String[] tokens = str.split(" ");
-	if (tokens[0].equals("put") && tokens.length == 3) {
-	  client.putFile(tokens[1], tokens[2]);
-	} else if (tokens[0].equals("get") && tokens.length == 3) {
-	  client.getFile(tokens[1], tokens[2]);
-	} else if (tokens[0].equals("delete") && tokens.length == 2) {
-	  client.deleteFile(tokens[1]);
-        } else if (tokens[0].equals("list") && tokens.length == 2) {
-          client.listFileWithPrefix(tokens[1]);
-	} else {
-	  System.out.println("Invalid command!");
-	  continue;
-	}
-	if(args.length < 3){
-	  System.out.println("Please enter command:");			
-	}
-	long endTime = System.currentTimeMillis();
-	System.out.println("Time elapsed: "+ (endTime-startTime) + " milli seconds");
+      String str;
+      try {
+        while (!(str = command_in.readLine()).equals("exit")) {
+          String[] tokens = str.split(" ");
+          client.runCommand(tokens);
+          System.out.println("Please enter command:");			
+        }
+      } catch (IOException ex) {
+        System.out.println(ex.getMessage());
       }
-    } catch (IOException ex) {
-      System.out.println(ex.getMessage());
+    } else {
+      // Command line Mode
+      client.runCommand(Arrays.copyOfRange(args, 2, args.length));
     }
   }
 }
