@@ -110,11 +110,9 @@ class FileServer extends Thread {
 
             // Get the file
 	    try {
+              File tmp_file = File.createTempFile(fileName + (int) System.currentTimeMillis(), ".temp");
 	      File saved_file = new File(currentNode.getDirPath() + "/" + fileName);
-	      if (saved_file.exists()) {
-		saved_file = new File(currentNode.getDirPath() + "/" + fileName + ".bak");
-	      }
-	      FileOutputStream file_out = new FileOutputStream(saved_file);
+	      FileOutputStream file_out = new FileOutputStream(tmp_file);
 	      int res = 0;
 	      while (file_size > 0) {
 		res = sock_in.read(buf, 0, buf.length);
@@ -126,6 +124,7 @@ class FileServer extends Thread {
 	      }
 	      file_out.flush();
 	      file_out.close();
+              tmp_file.renameTo(saved_file);
 
 	      // Send back the acknowledgement of the file
 	      GroupMessage.newBuilder()

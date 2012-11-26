@@ -45,6 +45,8 @@ class MemListNode {
   private String dirPath;
   private FileServer fileServer;
   private final Logger LOGGER = Logger.getLogger(MemListNode.class.getName());
+  private final int MAX_WORKER = 10;
+
   MemListNode(Member current_member, Member portal_member) {
     currentMember = current_member;
     portalMember = portal_member;
@@ -273,20 +275,6 @@ class MemListNode {
     LOGGER.info("Received file " + file_name + " of size " + saved_file.length());
   }
 
-  private ByteString readFile(String local_name) {
-    File file = new File(local_name); 
-    byte[] file_data = new byte[(int)file.length()];
-    try {
-      DataInputStream dis = new DataInputStream(new FileInputStream(file));
-      dis.readFully(file_data);
-      dis.close();
-    } catch(Exception ex) {
-      System.out.println(ex.getMessage());
-      return null;
-    }
-    return ByteString.copyFrom(file_data);
-  }
-
   public void handleGetFile(String file_name) {
     File saved_file = new File(dirPath + "/" + file_name);
     LOGGER.info("Sending file " + file_name + " of size " + saved_file.length());
@@ -400,79 +388,78 @@ class MemListNode {
     startFailureDetector();
   }
 
+  // 
+  // Check files and push them if not existing at required nodes
+  //
   private void handleFilesRecovery()
   {
     LOGGER.info("Start File Recovery");
-    // Check files and push them if not existing at required nodes
     File directory = new File(dirPath);
     File[] files = directory.listFiles();
 
     // Maximum number of push worker threads possible
-    MemListNodeWorker worker[] = new MemListNodeWorker[files.length * 2];
+    FileClient workers[] = new FileClient[MAX_WORKER];
+
     int j=0;
-    for(File file:files) {
+    for (File file : files) {
       String file_name = file.getName();
+
       // Initiate replication and return - let replication happen passively
       int index1, index2;
+      Member target[] = new Member[2];
       synchronized(memberList) {
-	index1 = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
-	index2 = (int) ((index1 + 1) % memberList.size());
+        index1 = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
+        index2 = (int) ((index1 + 1) % memberList.size());
+        target[0] = memberList.get(index1);
+        target[1] = memberList.get(index2);
       }
 
-      ByteString file_content = null;
-      Member target[] = new Member[2];
-      target[0] = memberList.get(index1);
-      target[1] = memberList.get(index2);
-      for(int i = 0;i < 2;i++)
-      {
-	// Continue is the file belongs to this node
-	if((target[i].getIp().equals(currentMember.getIp()) == true)
-	   && (target[i].getPort() == currentMember.getPort())){
-	  continue;
-	}
-	LOGGER.info("Checking for file" + file_name + " at " + target[i].getIp() + "_" + target[i].getPort() );
-	// Check if file exists at target
-	GroupMessage send_msg = GroupMessage.newBuilder()
-	  .setTarget(target[i])
-	  .setAction(GroupMessage.Action.CHECK_FILE_EXIST)
-	  .setFileName(file_name)
-	  .build();        
-	GroupMessage rcv_msg = sendMessageWaitResponse(target[i], send_msg);	
-	if(rcv_msg.getAction() != GroupMessage.Action.FILE_EXIST){
-	  LOGGER.info("File " + file_name + "does not exist at " +target[i].getIp() + "_" + target[i].getPort());	
-	  // Push file if file does not exist at target
-	  if(file_content == null){
-	    // Read file content from the file
-	    file_content = readFile(dirPath + "/" + file_name);	
-	  }
-	  if(file_content != null){
-	    LOGGER.info("Pushing file" + file_name + "to " + target[i].getIp() + "_" + target[i].getPort());
-	    send_msg = GroupMessage.newBuilder()
-	      .setTarget(target[i])
-	      .setAction(GroupMessage.Action.PUSH_FILE)
-	      .setFileContent(file_content)
-	      .setFileName(file_name)
-	      .build();
-	    worker[j] = new MemListNodeWorker(target[i],send_msg);
-	    worker[j].start();
-	    j++;
-	  }
-	}
-	else {
-	  LOGGER.info("File " + file_name + "exists at " +target[i].getIp() + "_" + target[i].getPort());
-	}
+      for(int i = 0; i < 2; i++) {
+
+        // Continue is the file belongs to this node
+        if((target[i].getIp().equals(currentMember.getIp()))
+           && (target[i].getPort() == currentMember.getPort())){
+          continue;
+        }
+
+        // Check if file exists at target
+        LOGGER.info("Checking for file" + file_name + " at " + target[i].getIp() + "_" + target[i].getPort() );
+        GroupMessage send_msg = GroupMessage.newBuilder()
+          .setTarget(target[i])
+          .setAction(GroupMessage.Action.CHECK_FILE_EXIST)
+          .setFileName(file_name)
+          .build();        
+        GroupMessage rcv_msg = sendMessageWaitResponse(target[i], send_msg);	
+        if(rcv_msg.getAction() == GroupMessage.Action.FILE_EXIST) {
+          LOGGER.info("File " + file_name + "exists at " +target[i].getIp() + "_" + target[i].getPort());
+          continue;
+        }
+
+        // Push file if file does not exist at target
+        LOGGER.info("File " + file_name + "does not exist at " +target[i].getIp() + "_" + target[i].getPort());	
+        LOGGER.info("Pushing file" + file_name + "to " + target[i].getIp() + "_" + target[i].getPort());
+        workers[j] = new FileClient(target[i], file_name, file, GroupMessage.Action.PUSH_FILE_VALUE);
+        workers[j++].start();
+        if (j == MAX_WORKER) {
+          waitForAllWorkers(workers);
+        }
       }
     }	
+    waitForAllWorkers(workers);
+    LOGGER.info("Success: File Recovery completed!");
+  }
 
-    for(int k=0;k<j;k++){
-      try{
-	worker[j].join();
-      }
-      catch (Exception ex) {
-	System.out.println(ex.getMessage());
+  public void waitForAllWorkers(FileClient[] workers) {
+    for (int i = 0; i < workers.length; i++) {
+      try {
+        if (workers[i] != null) {
+          workers[i].join();
+          workers[i] = null;
+        }
+      } catch (Exception ex) {
+        System.out.println(ex.getMessage());
       }
     }
-    LOGGER.info("Success: File Recovery completed!");
   }
 
   public void broadcastTargetJoin(Member joiner) {
