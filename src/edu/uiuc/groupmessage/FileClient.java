@@ -35,39 +35,54 @@ class FileClient extends Thread {
   public void run() {
     System.out.println("FileClient is up");
     try {
+      // Setup Socket and I/O
       Socket sock = new Socket(receiver.getIp(), receiver.getPort() + 2); 
       DataOutputStream sock_out = new DataOutputStream(sock.getOutputStream());
       InputStream sock_in = sock.getInputStream();
       sock_out.writeInt(action);
+
+      // send file anme
       char[] chars = fileName.toCharArray();
       sock_out.writeInt(chars.length);
       sock_out.writeChars(fileName);
-      switch (action) {
-	case GroupMessage.Action.GET_FILE_VALUE:
-	{
-	    FileOutputStream file_out = new FileOutputStream(file);
-	    int res = 0;
-	    while ((res = sock_in.read(buf, 0, buf.length)) != -1) {
-	      file_out.write(buf, 0, res);
-	    }
-	    file_out.close();
-	  break;
-	}
-	default:
-	{
-	    BufferedInputStream file_in = new BufferedInputStream(new FileInputStream(file));
-	    sock_out.writeLong(file.length());
-	    int res = 0;
-	    while ((res = file_in.read(buf, 0, buf.length)) != -1) {
-	      sock_out.write(buf, 0, res);
-	    }
-	    sock_out.flush();
 
-	    result = GroupMessage.parseDelimitedFrom(sock_in);
-	    System.out.println(result.toString());
-	    file_in.close();
-	  break;
-	}
+      switch (action) {
+      case GroupMessage.Action.GET_FILE_VALUE:
+        {
+          // Check the file status
+          result = GroupMessage.parseDelimitedFrom(sock_in);
+          if (result.getAction() != GroupMessage.Action.FILE_OK) {
+            break;
+          }
+
+          // Read file content
+          FileOutputStream file_out = new FileOutputStream(file);
+          int res = 0;
+          while ((res = sock_in.read(buf, 0, buf.length)) != -1) {
+            file_out.write(buf, 0, res);
+          }
+          file_out.close();
+          break;
+        }
+      default:
+        {
+          // Send file size
+          BufferedInputStream file_in = new BufferedInputStream(new FileInputStream(file));
+          sock_out.writeLong(file.length());
+          int res = 0;
+
+          // Send file content
+          while ((res = file_in.read(buf, 0, buf.length)) != -1) {
+            sock_out.write(buf, 0, res);
+          }
+          sock_out.flush();
+          
+          // Get the acknowledgement from receiver
+          result = GroupMessage.parseDelimitedFrom(sock_in);
+          System.out.println(result.toString());
+          file_in.close();
+          break;
+        }
       }
       // Close I/O
       sock_in.close();

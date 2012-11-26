@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -152,7 +151,7 @@ class MemListNode {
 
     saved_file = new File(dirPath + "/" + file_name);	
 
-    if(saved_file.exists() == true) {
+    if(saved_file.exists()) {
       return GroupMessage.newBuilder()
 	.setTarget(currentMember)
 	.setAction(GroupMessage.Action.FILE_EXIST)
@@ -167,20 +166,46 @@ class MemListNode {
   }
 
   public GroupMessage handleGetFileLocation(String file_name) {
+    // File Error if the file name is null
     if (file_name == null) {
       return GroupMessage.newBuilder()
 	.setTarget(currentMember)
 	.setAction(GroupMessage.Action.FILE_ERROR)
 	.build();
     }
+
+    // Get the two members that has the file
+    Member[] member = new Member[2];
     synchronized(memberList) {
-      int index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
+      int index1 = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
+      int index2 = (index1 + 1) % memberList.size();
       LOGGER.info("Received query for the file " + file_name);
-      return GroupMessage.newBuilder()
-	.setTarget(memberList.get(index))
-	.setAction(GroupMessage.Action.FILE_LOCATION)
-	.build();
+      member[0] = memberList.get(index1);
+      member[1] = memberList.get(index2);
     }
+
+    // Check the existence of the file
+    for (int i = 0; i < 2; i++) {
+      GroupMessage msg = GroupMessage.newBuilder()
+        .setTarget(member[i])
+        .setAction(GroupMessage.Action.CHECK_FILE_EXIST)
+        .setFileName(file_name)
+        .build();
+      GroupMessage rcv_msg = sendMessageWaitResponse(member[i], msg);
+      if (rcv_msg.getAction() == GroupMessage.Action.FILE_EXIST) {
+        return GroupMessage.newBuilder()
+          .setTarget(member[i])
+          .setAction(GroupMessage.Action.FILE_LOCATION)
+          .build();
+      }
+    }
+
+    // If file does not exist in both nodes, return the major member
+    // that should keep the file
+    return GroupMessage.newBuilder()
+      .setTarget(member[0])
+      .setAction(GroupMessage.Action.FILE_NOT_EXIST)
+      .build();
   }
 
   public void handleDeleteReplica(String file_name) {
@@ -267,62 +292,24 @@ class MemListNode {
     LOGGER.info("Sending file " + file_name + " of size " + saved_file.length());
   }
 
-    public void handlePutFile(String file_name) {
-      File saved_file = new File(dirPath + "/" + file_name);
-      LOGGER.info("Received file " + file_name + " of size " + saved_file.length());
+  public void handlePutFile(String file_name) {
+    File saved_file = new File(dirPath + "/" + file_name);
+    LOGGER.info("Received file " + file_name + " of size " + saved_file.length());
 
-      // Initiate replication and return - let replication happen passively
-      int index;
-      Member target;
-      synchronized(memberList) {
-	index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
-	index = (int) ((index + 1) % memberList.size());
-	target = memberList.get(index);
-      }
-      
-      // Prepare for the PUSH_FILE
-      LOGGER.info("Pushing file to " + target.getIp() + "_" + target.getPort());
-      FileClient client = new FileClient(target, file_name, saved_file, GroupMessage.Action.PUSH_FILE_VALUE);
-      client.start();
+    // Initiate replication and return - let replication happen passively
+    int index;
+    Member target;
+    synchronized(memberList) {
+      index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
+      index = (int) ((index + 1) % memberList.size());
+      target = memberList.get(index);
     }
-
-//  public GroupMessage handlePutFile(String file_name, ByteString file_content) {
-//    LOGGER.info("Received file " + file_name + " of size " + file_content.size());
-//
-//    // Save the file
-//    try {
-//      File saved_file = new File(dirPath + "/" + file_name);
-//      FileOutputStream file_out = new FileOutputStream(saved_file);
-//      file_out.write(file_content.toByteArray());
-//      file_out.flush();
-//      file_out.close();
-//    } catch (Exception ex) {
-//      System.out.println(ex.getMessage());
-//    }
-//
-//    // Initiate replication and return - let replication happen passively
-//    int index;
-//    synchronized(memberList) {
-//      index = (int) ((file_name.hashCode() & 0xffffffffL) % memberList.size());
-//      index = (int) ((index + 1) % memberList.size());
-//    }
-//    // Prepare for the PUSH_FILE message
-//    Member target = memberList.get(index);
-//    LOGGER.info("Pushing file to " + target.getIp() + "_" + target.getPort());
-//    GroupMessage send_msg = GroupMessage.newBuilder()
-//      .setTarget(target)
-//      .setAction(GroupMessage.Action.PUSH_FILE)
-//      .setFileContent(file_content)
-//      .setFileName(file_name)
-//      .build();
-//    MemListNodeWorker worker = new MemListNodeWorker(target,send_msg);
-//    worker.start();
-//
-//    return GroupMessage.newBuilder()
-//      .setTarget(currentMember)
-//      .setAction(GroupMessage.Action.FILE_OK)
-//      .build();
-//  }
+    
+    // Prepare for the PUSH_FILE
+    LOGGER.info("Pushing file to " + target.getIp() + "_" + target.getPort());
+    FileClient client = new FileClient(target, file_name, saved_file, GroupMessage.Action.PUSH_FILE_VALUE);
+    client.start();
+  }
 
   public void handleHeartbeats(Member sender) {
     //LOGGER.info("Received heartbeat from node " + memberToID(sender));
@@ -450,7 +437,7 @@ class MemListNode {
 	  .setAction(GroupMessage.Action.CHECK_FILE_EXIST)
 	  .setFileName(file_name)
 	  .build();        
-	GroupMessage rcv_msg = sendMessage(target[i], send_msg);	
+	GroupMessage rcv_msg = sendMessageWaitResponse(target[i], send_msg);	
 	if(rcv_msg.getAction() != GroupMessage.Action.FILE_EXIST){
 	  LOGGER.info("File " + file_name + "does not exist at " +target[i].getIp() + "_" + target[i].getPort());	
 	  // Push file if file does not exist at target
@@ -545,7 +532,7 @@ class MemListNode {
   }
 
   public void sendMessageTo(GroupMessage msg, Member receiver) {
-    new Thread() {
+    Thread worker = new Thread() {
       private GroupMessage msg;
       private Member receiver;
 
@@ -563,7 +550,9 @@ class MemListNode {
 	try {
 	  Socket sock = new Socket(receiver.getIp(), receiver.getPort());
 	  OutputStream sock_out = sock.getOutputStream();
+          InputStream sock_in = sock.getInputStream();
 	  msg.writeDelimitedTo(sock_out);
+          GroupMessage.parseDelimitedFrom(sock_in);
 	  sock_out.flush();
 	  sock_out.close();
 	  sock.close();
@@ -571,7 +560,13 @@ class MemListNode {
 	  System.out.println(ex.getMessage());
 	}
       }
-    }.initialize(msg, receiver).start();
+    }.initialize(msg, receiver);
+    worker.start();
+    try { 
+      worker.join();
+    } catch(Exception ex) {
+      System.out.println(ex.getMessage());
+    }
   }
 
   public void broadcastTargetLeave() {
@@ -725,7 +720,7 @@ class MemListNode {
     }
   }
 
-  private GroupMessage sendMessage(Member target, GroupMessage msg) {
+  private GroupMessage sendMessageWaitResponse(Member target, GroupMessage msg) {
     MemListNodeWorker worker = new MemListNodeWorker(target, msg);
     worker.start();
     try {

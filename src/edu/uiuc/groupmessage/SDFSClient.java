@@ -1,10 +1,8 @@
 package edu.uiuc.groupmessage;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,7 +13,6 @@ import java.net.UnknownHostException;
 
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 import edu.uiuc.groupmessage.GroupMessageProtos.Member;
-import com.google.protobuf.ByteString;
 
 class SDFSClient extends Thread {
   private Member master;
@@ -25,20 +22,6 @@ class SDFSClient extends Thread {
       .setPort(port)
       .setIp(masterIP)
       .build();
-  }
-
-  private ByteString readFile(String local_name) {
-    File file = new File(local_name); 
-    byte[] file_data = new byte[(int)file.length()];
-    try {
-      DataInputStream dis = new DataInputStream(new FileInputStream(file));
-      dis.readFully(file_data);
-      dis.close();
-    } catch(Exception ex) {
-      System.out.println(ex.getMessage());
-      return null;
-    }
-    return ByteString.copyFrom(file_data);
   }
 
   public void deleteFile(String sdfs_name) {
@@ -95,6 +78,13 @@ class SDFSClient extends Thread {
       return;
     }
 
+    // Check if the local file exist
+    File local_file = new File(local_name);
+    if (!local_file.exists()) {
+      System.out.println("The local file " + local_name + " does not exist.");
+      return;
+    }
+
     // Prepare for GET_FILE_LOCATION message
     send_msg = GroupMessage.newBuilder()
       .setTarget(master)
@@ -104,18 +94,14 @@ class SDFSClient extends Thread {
 
     // send the message to the master and check the response
     rcv_msg = sendMessage(master, send_msg);
-    if (rcv_msg.getAction() != GroupMessage.Action.FILE_LOCATION) {
+    if (rcv_msg.getAction() != GroupMessage.Action.FILE_LOCATION && rcv_msg.getAction() != GroupMessage.Action.FILE_NOT_EXIST) {
       System.out.println("Received Unknown message action " + rcv_msg.getAction().name());
       return;
     }
 
-    // Read file content from the file
-//    ByteString file_data = readFile(local_name);
-//    if (file_data == null) {
-//      return;
-//    }
+    // Send the file to the server returned by the master
     Member target = rcv_msg.getTarget();
-    FileClient client = new FileClient(target, sdfs_name, new File(local_name), GroupMessage.Action.PUT_FILE_VALUE);  
+    FileClient client = new FileClient(target, sdfs_name, local_file, GroupMessage.Action.PUT_FILE_VALUE);  
     client.start();
     try {
       client.join();
@@ -131,7 +117,6 @@ class SDFSClient extends Thread {
     case FILE_ERROR:
       System.out.println("Error sending the file " + local_name);
       break;
-    case FILE_LOCATION:
     default:
       System.out.println("Received Unknown action " + rcv_msg.getAction().name());
       break;
@@ -151,13 +136,14 @@ class SDFSClient extends Thread {
       .setFileName(sdfs_name)
       .build();
 
-    // send the message to the master and check the response
+    // send the GET_FILE_LOCATION message to the master
     rcv_msg = sendMessage(master, send_msg);
-    if (rcv_msg.getAction() != GroupMessage.Action.FILE_LOCATION) {
-      System.out.println("Received Unknown message action " + rcv_msg.getAction().name());
-      return;
-    }
+//    if (rcv_msg.getAction() != GroupMessage.Action.FILE_LOCATION) {
+//      System.out.println("File does not exist in SDFS");
+//      return;
+//    }
 
+    // Start to get the file from the returned node
     Member target = rcv_msg.getTarget();
     System.out.println("Recieving file from" + target.getIp() + "_" + target.getPort());
     FileClient client = new FileClient(target, sdfs_name, new File(local_name), GroupMessage.Action.GET_FILE_VALUE);  
@@ -166,6 +152,16 @@ class SDFSClient extends Thread {
       client.join();
     } catch (Exception ex) {
       System.out.println(ex.getMessage());
+    }
+
+    // check the response
+    switch (client.getResult().getAction()) {
+    case FILE_OK:
+      System.out.println("Successfully received the file " + local_name);
+      break;
+    default:
+      System.out.println("Error receiving the file " + local_name);
+      break;
     }
   }
 

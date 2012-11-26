@@ -50,38 +50,65 @@ class FileServer extends Thread {
 	// Open I/O
 	DataInputStream sock_in = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
 	OutputStream sock_out = sock.getOutputStream();
+
+        // Read the message action
 	action = sock_in.readInt();
 	switch (action) {
 	case GroupMessage.Action.GET_FILE_VALUE:
 	  {
+            // Parse the SDFS file name
 	    int name_size = sock_in.readInt();
 	    char[] raw_name = new char[name_size];
 	    for (int i = 0; i < name_size; i++) {
 	      raw_name[i] = sock_in.readChar();
 	    }
 	    fileName = String.valueOf(raw_name);
+
+            // Check if the file exists
 	    File saved_file = new File(currentNode.getDirPath() + "/" + fileName);
-	    if (!saved_file.exists()) {
-	      System.out.println("the file does not exist.");
+	    if (saved_file.exists()) {
+              // File exists
+              GroupMessage.newBuilder()
+                .setTarget(currentMember)
+                .setAction(GroupMessage.Action.FILE_OK)
+                .build()
+                .writeDelimitedTo(sock_out);
+	    } else {
+              // File does not exist
+              GroupMessage.newBuilder()
+                .setTarget(currentMember)
+                .setAction(GroupMessage.Action.FILE_NOT_EXIST)
+                .build()
+                .writeDelimitedTo(sock_out);
 	      break;
-	    }
+            }
+
+            // Send the file content
 	    FileInputStream file_in = new FileInputStream(saved_file);
 	    int res = 0;
 	    while ((res = file_in.read(buf, 0, buf.length)) != -1) {
 	      sock_out.write(buf, 0, res);
 	    }
 	    file_in.close();
+
+            // Pass to MemListNode to process the file
+	    currentNode.handlePutFile(fileName);
 	    break;
 	  }
-	default:
+	default: // put file or push file
 	  {
+            // Parse the SDFS file name
 	    int name_size = sock_in.readInt();
 	    char[] raw_name = new char[name_size];
 	    for (int i = 0; i < name_size; i++) {
 	      raw_name[i] = sock_in.readChar();
 	    }
 	    fileName = String.valueOf(raw_name);
+
+            // Parse the SDFS file size
 	    long file_size = sock_in.readLong();
+
+            // Get the file
 	    try {
 	      File saved_file = new File(currentNode.getDirPath() + "/" + fileName);
 	      if (saved_file.exists()) {
@@ -100,7 +127,7 @@ class FileServer extends Thread {
 	      file_out.flush();
 	      file_out.close();
 
-	      // Send back the file reception result
+	      // Send back the acknowledgement of the file
 	      GroupMessage.newBuilder()
 		.setTarget(currentMember)
 		.setAction(GroupMessage.Action.FILE_OK)
@@ -109,6 +136,19 @@ class FileServer extends Thread {
 	    } catch (Exception ex) {
 	      System.out.println(ex.getMessage());
 	    }
+
+            // Hand the file name back to the current node to process
+            switch (action) {
+              case GroupMessage.Action.PUT_FILE_VALUE:
+                currentNode.handlePutFile(fileName);
+                break;
+              case GroupMessage.Action.PUSH_FILE_VALUE:
+                currentNode.handlePushFile(fileName);
+                break;
+              default:
+                System.exit(-1);
+                break;
+            }
 	    break;
 	  }
 	}
@@ -131,17 +171,6 @@ class FileServer extends Thread {
       while ((sock = serverSock.accept()) != null) {		
 	FileServerWorker worker = new FileServerWorker(currentNode, sock);
 	worker.start();
-	worker.join();
-	switch (worker.getAction()) {
-	  case GroupMessage.Action.PUT_FILE_VALUE:
-	    currentNode.handlePutFile(worker.getFileName());
-	    break;
-	  case GroupMessage.Action.PUSH_FILE_VALUE:
-	    currentNode.handlePushFile(worker.getFileName());
-	    break;
-	  case GroupMessage.Action.GET_FILE_VALUE:
-	    currentNode.handleGetFile(worker.getFileName());
-	}
       }
       serverSock.close();
     } catch(Exception ex) {
