@@ -52,7 +52,12 @@ CLASSES = \
 	MemListNode.java \
 	HeartbeatServer.java \
 	HeartbeatClient.java \
-	FailureDetector.java
+	FailureDetector.java\
+	job.java\
+	MapleMaster.java\
+	MapleWorker.java\
+	Maplef2Master.java
+
 
 #
 # the default make target entry

@@ -16,6 +16,7 @@ message GroupMessage {
     TARGET_LEAVES = 3;
     TARGET_FAILS = 4;
     TARGET_HEARTBEATS = 5;
+    MAPLE_REQUEST = 6;
   }
   required Action action = 2 [default = TARGET_HEARTBEATS];
   repeated Member member = 3;

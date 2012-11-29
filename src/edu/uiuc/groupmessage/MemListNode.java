@@ -11,12 +11,17 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
+import java.util.Scanner;
+import java.util.Comparator;
+import java.util.PriorityQueue;
+import java.util.ArrayList;
 
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
@@ -27,18 +32,26 @@ import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 import edu.uiuc.groupmessage.GroupMessageProtos.Member;
 
 class MemListNode {
+    int phase = 1;
+    private ArrayList<Boolean> JobDone;
+    private PriorityQueue < job > queue;
 	private Member currentMember;
 	private Member portalMember;
 	private Member heartbeatFrom;
 	private Member heartbeatTo;
 	private LinkedList< Member > memberList;
 	private MemListServer server;
+    private MapleMaster mserver;
+    private Maplef2Master mf2server;
+    private MapleWorker mworker;
+    private Maplef2Worker mf2worker;
 	private Timer heartbeatClientTimer;
 	private Timer detectorTimer;
 	private long heartbeatTimestamp;
 	private final Logger LOGGER = Logger.getLogger(MemListNode.class.getName());
 
 	MemListNode(Member current_member, Member portal_member) {
+        
 		currentMember = current_member;
 		portalMember = portal_member;
 		heartbeatFrom = null;
@@ -64,7 +77,22 @@ class MemListNode {
 		server.start();
 		startHeartbeatServer();
 	}
-
+    
+    public MapleMaster getmserver(){
+        return mserver;
+    }
+    public LinkedList< Member > getMemberList() {
+		return memberList;
+	}
+    
+    public PriorityQueue < job > getQ() {
+		return queue;
+	}
+    
+    public List< Boolean > getJobDone() {
+		return JobDone;
+	}
+    
 	public Member getCurrentMember() {
 		return currentMember;
 	}
@@ -108,10 +136,189 @@ class MemListNode {
 			case TARGET_HEARTBEATS:
 				handleHeartbeats(msg.getTarget());
 				break;
+            case MAPLE_REQUEST:
+                handleInitMapleRequest(msg.getArgstrList());
+                break;
+            case MAPLE_WORK:
+                return handleMapleWork(msg.getArgstrList());
+            case MAPLE_WORK_DONE:
+                handleMapleWorkDone(msg.getTarget(),msg.getArgstrList());
+                break;
+            case MAPLE_PHASE_ONE_DONE:
+                handleMaplePhaseTwo(msg.getArgstrList());
+                break;
+            case MAPLE_F2_WORK:
+                return handleMapleF2Work(msg.getArgstrList());
+            case MAPLE_PHASE_TWO_DONE:
+                System.out.println("-------Maple is Completely Done-----------");
+                break;
 		}
 		return null;
 	}
+   
+    public GroupMessage handleMapleF2Work(List< String > args){
+        String prefix = args.get(0);
+        String filename = args.get(1);
+        String id = args.get(2);
+        
+        System.out.println("I receive job name "+ filename +", it's id "+ id);
+        
+        GroupMessage msg = GroupMessage.newBuilder()
+        .setTarget(currentMember)
+        .setAction(GroupMessage.Action.NODE_FREE)
+        .build();
+        
+        mf2worker = new Maplef2Worker(this,prefix,filename,id);
+        mf2worker.start();
+        
+        return msg;
+    }
+    // To be done:
+    // synchronize jobqueue when done with current work
+    // need to ignore the reply from phase 1(his work is already done by someone else)
+    public void handleMaplePhaseTwo(List< String > args){
+        // request to abort current phase 1 jobs
+        
+        
+        // change phase to 2
+        phase = 2;
+        System.out.println("------------------------------------");
+        System.out.println("Maple Phase two");
+        
+        String prefix = args.get(0);
+        // get job list
+        LinkedList<String> f2job = getmserver().OprationSDFS("list",prefix,"");        
+        trimKey(f2job);
+        RemoveDuplicate(f2job);
+        
+        queue = new PriorityQueue<job>();
+        for (int i = 0; i < f2job.size(); i++){
+            System.out.println(f2job.get(i)+", id = "+i);
+            queue.add(new job(f2job.get(i),0,i));
+        }
+        
+        // Initial JobDone List
+        JobDone = new ArrayList<Boolean>();
+        for (int i = 0; i < f2job.size(); i++)
+            JobDone.add(false);
+        System.out.println("JobDone has "+JobDone.size()+" jobs.");
+        System.out.println("queue has "+queue.size()+" jobs.");
+        
+        mf2server = new Maplef2Master(this,args.get(0),phase);
+		mf2server.start();
+    }
+    
+    public void trimKey(LinkedList<String> joblist){
+        String delims = "_";
+        for( int j = 0; j < joblist.size(); j++){
+            String[] tokens = joblist.get(j).split(delims);
+            String str = tokens[0] +"_"+ tokens[1];
+            joblist.set(j,str);
+            //System.out.println(joblist.get(j));
+        }
+    }
+    
+    public void RemoveDuplicate(LinkedList<String> keylist){
+        for (int i = 0; i < keylist.size(); i++)
+            for (int j = i+1; j < keylist.size(); j++)
+                if ((keylist.get(i)).equals(keylist.get(j))){
+                    keylist.remove(j);
+                    j--;    
+                }
+    }
+    
+    public void handleMapleWorkDone(Member sender, List< String > args){
+        // write the done work to log !!!!!!!!!!!!!!!!!!!
+        
+        // mark the work in JobDone as true
+        System.out.println(args.get(0)+" is done, its id is "+ args.get(1));
+        JobDone.set(Integer.parseInt(args.get(1)),true);
+        // send new possible job
+        sendNewWork(sender,args.get(2));
+    }
+    
+    public void sendNewWork(Member member,String prefix){
+        job TopJob = this.mserver.findjob(phase);
+        if (TopJob == null)
+            return;
+        
+        GroupMessage msg = null;
+        if (phase == 1){
+            
+            msg = GroupMessage.newBuilder()
+            .setTarget(member)
+            .addArgstr(prefix)// pass prefix
+            .addArgstr(TopJob.getname()) // pass filename
+            .addArgstr(Integer.toString(TopJob.getid()))// pass job id
+            .setAction(GroupMessage.Action.MAPLE_WORK)
+            .build();
+        } else if (phase == 2){
+            
+            msg = GroupMessage.newBuilder()
+            .setTarget(member)
+            .addArgstr(prefix)// pass prefix
+            .addArgstr(TopJob.getname()) // pass filename
+            .addArgstr(Integer.toString(TopJob.getid()))// pass job id
+            .setAction(GroupMessage.Action.MAPLE_F2_WORK)
+            .build();
+        }
+        
+        sendMessageTo(msg,member);
+    }
+    
+    public GroupMessage handleMapleWork(List< String > args){
+        System.out.println("I receive prefix:"+ args.get(0)+", job name "+ args.get(1)+", it's id "+ args.get(2));
+        
+        GroupMessage msg = GroupMessage.newBuilder()
+        .setTarget(currentMember)
+        .setAction(GroupMessage.Action.NODE_FREE)
+        .build();
+        
+        mworker = new MapleWorker(this,args.get(0),args.get(1),args.get(2));
+		mworker.start();
+        
+        return msg;
+    }
+    
+    public void handleInitMapleRequest(List< String > args){
+        
+        // create a job priority queue
+        queue = new PriorityQueue<job>();
+        CreateJobQ(args);
+        
+        // Initial JobDone List
+        JobDone = new ArrayList<Boolean>();
+        for (int i = 0; i < (args.size()-2); i++)
+            JobDone.add(false);
+        System.out.println("JobDone has "+JobDone.size()+" jobs.");
+        System.out.println("queue has "+queue.size()+" jobs.");
+        
+        mserver = new MapleMaster(this,args,phase);
+		mserver.start();
+    }
+    
+    public void CreateJobQ (List< String > args){
+        //for (int i = 0; i < args.size(); i++)
+        //    System.out.println("args.get("+i+") = "+args.get(i));
+        
+        for (int i = 2; i < args.size(); i++){
+            System.out.println(args.get(i)+", id = "+(i-2));
+            queue.add(new job(args.get(i),0,i-2));
+        }
+    }
 
+    public void sendMapleRequestTo(LinkedList< String > arg) {
+        
+        GroupMessage msg = GroupMessage.newBuilder()
+        .setTarget(currentMember)
+        .addAllArgstr(arg)
+        .setAction(GroupMessage.Action.MAPLE_REQUEST)
+        .build();
+        
+        sendMessageTo(msg,memberList.get(0));
+    }
+
+    
 	public void handleHeartbeats(Member sender) {
 		LOGGER.info("Received heartbeat from node " + memberToID(sender));
 		if (heartbeatFrom != null && heartbeatFrom.equals(sender)) {
@@ -246,6 +453,48 @@ class MemListNode {
 			System.out.println(ex.getMessage());
 		}
 	}
+    
+    public GroupMessage sendMessageWaitResponse(Member target, GroupMessage msg) {
+        MemListNodeWorker worker = new MemListNodeWorker(target, msg);
+        worker.start();
+        try {
+            worker.join();
+        } catch (InterruptedException ex) {
+            System.out.println(ex.getMessage());
+        }
+        return worker.getRcvMsg();
+    }
+    class MemListNodeWorker extends Thread {
+        private Member target;
+        private GroupMessage send_msg;
+        private GroupMessage rcv_msg;
+        MemListNodeWorker(Member target, GroupMessage send_msg) {
+            this.target = target;
+            this.send_msg = send_msg;
+        }
+        
+        public GroupMessage getRcvMsg() {
+            return rcv_msg;
+        }
+        
+        public void run() {
+            try {
+                Socket sock = new Socket(target.getIp(), target.getPort());
+                InputStream sock_in = sock.getInputStream();
+                OutputStream sock_out = sock.getOutputStream();
+                send_msg.writeDelimitedTo(sock_out);
+                sock_out.flush();
+                rcv_msg = GroupMessage.parseDelimitedFrom(sock_in);
+                sock_out.close();
+                sock_in.close();
+                sock.close();
+            } catch (UnknownHostException ex) {
+                System.out.println(ex.getMessage());
+            } catch (IOException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
 
 	public void broadcastMessage(GroupMessage msg, List< Member > list) {
 		for (Member member : list) {
@@ -346,7 +595,7 @@ class MemListNode {
 
 	public static String getCurrentIp() {
 		try {
-			NetworkInterface nif = NetworkInterface.getByName("eth0");
+			NetworkInterface nif = NetworkInterface.getByName("en1");
 			Enumeration<InetAddress> addrs = nif.getInetAddresses();
 			while (addrs.hasMoreElements()) {
 				InetAddress addr = addrs.nextElement();
@@ -468,13 +717,23 @@ class MemListNode {
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 		String str;
 		System.out.println("Please enter command:");
+        
 		try {
 			while ((str = input.readLine()) != null) {
+                
+                Scanner sc = new Scanner(str);
+                String s = sc.next();
+                
 				if (str.equals("leave")) {
 					node.broadcastTargetLeave();
 				} else if (str.equals("join")) {
 					node.sendJoinRequestTo();
-				}
+				} else if (s.equals("maple")){                    
+                    LinkedList< String > arg = new LinkedList< String >();
+                    while (sc.hasNext())
+                        arg.add(sc.next());                        
+                    node.sendMapleRequestTo(arg);
+                }
 				System.out.println("Please enter command:");
 			}
 		} catch(IOException ex) {

@@ -534,6 +534,11 @@ public final class GroupMessageProtos {
         getMemberOrBuilderList();
     edu.uiuc.groupmessage.GroupMessageProtos.MemberOrBuilder getMemberOrBuilder(
         int index);
+    
+    // repeated string argstr = 4;
+    java.util.List<String> getArgstrList();
+    int getArgstrCount();
+    String getArgstr(int index);
   }
   public static final class GroupMessage extends
       com.google.protobuf.GeneratedMessage
@@ -571,6 +576,13 @@ public final class GroupMessageProtos {
       TARGET_LEAVES(3, 3),
       TARGET_FAILS(4, 4),
       TARGET_HEARTBEATS(5, 5),
+      MAPLE_REQUEST(6, 6),
+      MAPLE_WORK(7, 7),
+      NODE_FREE(8, 8),
+      MAPLE_WORK_DONE(9, 9),
+      MAPLE_PHASE_ONE_DONE(10, 10),
+      MAPLE_F2_WORK(11, 11),
+      MAPLE_PHASE_TWO_DONE(12, 12),
       ;
       
       public static final int JOIN_REQUEST_VALUE = 0;
@@ -579,6 +591,13 @@ public final class GroupMessageProtos {
       public static final int TARGET_LEAVES_VALUE = 3;
       public static final int TARGET_FAILS_VALUE = 4;
       public static final int TARGET_HEARTBEATS_VALUE = 5;
+      public static final int MAPLE_REQUEST_VALUE = 6;
+      public static final int MAPLE_WORK_VALUE = 7;
+      public static final int NODE_FREE_VALUE = 8;
+      public static final int MAPLE_WORK_DONE_VALUE = 9;
+      public static final int MAPLE_PHASE_ONE_DONE_VALUE = 10;
+      public static final int MAPLE_F2_WORK_VALUE = 11;
+      public static final int MAPLE_PHASE_TWO_DONE_VALUE = 12;
       
       
       public final int getNumber() { return value; }
@@ -591,6 +610,13 @@ public final class GroupMessageProtos {
           case 3: return TARGET_LEAVES;
           case 4: return TARGET_FAILS;
           case 5: return TARGET_HEARTBEATS;
+          case 6: return MAPLE_REQUEST;
+          case 7: return MAPLE_WORK;
+          case 8: return NODE_FREE;
+          case 9: return MAPLE_WORK_DONE;
+          case 10: return MAPLE_PHASE_ONE_DONE;
+          case 11: return MAPLE_F2_WORK;
+          case 12: return MAPLE_PHASE_TWO_DONE;
           default: return null;
         }
       }
@@ -621,7 +647,7 @@ public final class GroupMessageProtos {
       }
       
       private static final Action[] VALUES = {
-        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, 
+        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, MAPLE_REQUEST, MAPLE_WORK, NODE_FREE, MAPLE_WORK_DONE, MAPLE_PHASE_ONE_DONE, MAPLE_F2_WORK, MAPLE_PHASE_TWO_DONE, 
       };
       
       public static Action valueOf(
@@ -689,10 +715,25 @@ public final class GroupMessageProtos {
       return member_.get(index);
     }
     
+    // repeated string argstr = 4;
+    public static final int ARGSTR_FIELD_NUMBER = 4;
+    private com.google.protobuf.LazyStringList argstr_;
+    public java.util.List<String>
+        getArgstrList() {
+      return argstr_;
+    }
+    public int getArgstrCount() {
+      return argstr_.size();
+    }
+    public String getArgstr(int index) {
+      return argstr_.get(index);
+    }
+    
     private void initFields() {
       target_ = edu.uiuc.groupmessage.GroupMessageProtos.Member.getDefaultInstance();
       action_ = edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage.Action.TARGET_HEARTBEATS;
       member_ = java.util.Collections.emptyList();
+      argstr_ = com.google.protobuf.LazyStringArrayList.EMPTY;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -733,6 +774,9 @@ public final class GroupMessageProtos {
       for (int i = 0; i < member_.size(); i++) {
         output.writeMessage(3, member_.get(i));
       }
+      for (int i = 0; i < argstr_.size(); i++) {
+        output.writeBytes(4, argstr_.getByteString(i));
+      }
       getUnknownFields().writeTo(output);
     }
     
@@ -753,6 +797,15 @@ public final class GroupMessageProtos {
       for (int i = 0; i < member_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(3, member_.get(i));
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < argstr_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(argstr_.getByteString(i));
+        }
+        size += dataSize;
+        size += 1 * getArgstrList().size();
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -894,6 +947,8 @@ public final class GroupMessageProtos {
         } else {
           memberBuilder_.clear();
         }
+        argstr_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
       
@@ -953,6 +1008,12 @@ public final class GroupMessageProtos {
         } else {
           result.member_ = memberBuilder_.build();
         }
+        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          argstr_ = new com.google.protobuf.UnmodifiableLazyStringList(
+              argstr_);
+          bitField0_ = (bitField0_ & ~0x00000008);
+        }
+        result.argstr_ = argstr_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1000,6 +1061,16 @@ public final class GroupMessageProtos {
               memberBuilder_.addAllMessages(other.member_);
             }
           }
+        }
+        if (!other.argstr_.isEmpty()) {
+          if (argstr_.isEmpty()) {
+            argstr_ = other.argstr_;
+            bitField0_ = (bitField0_ & ~0x00000008);
+          } else {
+            ensureArgstrIsMutable();
+            argstr_.addAll(other.argstr_);
+          }
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1074,6 +1145,11 @@ public final class GroupMessageProtos {
               edu.uiuc.groupmessage.GroupMessageProtos.Member.Builder subBuilder = edu.uiuc.groupmessage.GroupMessageProtos.Member.newBuilder();
               input.readMessage(subBuilder, extensionRegistry);
               addMember(subBuilder.buildPartial());
+              break;
+            }
+            case 34: {
+              ensureArgstrIsMutable();
+              argstr_.add(input.readBytes());
               break;
             }
           }
@@ -1382,6 +1458,62 @@ public final class GroupMessageProtos {
         return memberBuilder_;
       }
       
+      // repeated string argstr = 4;
+      private com.google.protobuf.LazyStringList argstr_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureArgstrIsMutable() {
+        if (!((bitField0_ & 0x00000008) == 0x00000008)) {
+          argstr_ = new com.google.protobuf.LazyStringArrayList(argstr_);
+          bitField0_ |= 0x00000008;
+         }
+      }
+      public java.util.List<String>
+          getArgstrList() {
+        return java.util.Collections.unmodifiableList(argstr_);
+      }
+      public int getArgstrCount() {
+        return argstr_.size();
+      }
+      public String getArgstr(int index) {
+        return argstr_.get(index);
+      }
+      public Builder setArgstr(
+          int index, String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureArgstrIsMutable();
+        argstr_.set(index, value);
+        onChanged();
+        return this;
+      }
+      public Builder addArgstr(String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureArgstrIsMutable();
+        argstr_.add(value);
+        onChanged();
+        return this;
+      }
+      public Builder addAllArgstr(
+          java.lang.Iterable<String> values) {
+        ensureArgstrIsMutable();
+        super.addAll(values, argstr_);
+        onChanged();
+        return this;
+      }
+      public Builder clearArgstr() {
+        argstr_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+        return this;
+      }
+      void addArgstr(com.google.protobuf.ByteString value) {
+        ensureArgstrIsMutable();
+        argstr_.add(value);
+        onChanged();
+      }
+      
       // @@protoc_insertion_point(builder_scope:GroupMessage)
     }
     
@@ -1413,15 +1545,19 @@ public final class GroupMessageProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\023group_message.proto\"5\n\006Member\022\n\n\002ip\030\001 " +
-      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\371\001\n" +
+      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\230\003\n" +
       "\014GroupMessage\022\027\n\006target\030\001 \002(\0132\007.Member\0227" +
       "\n\006action\030\002 \002(\0162\024.GroupMessage.Action:\021TA" +
       "RGET_HEARTBEATS\022\027\n\006member\030\003 \003(\0132\007.Member" +
-      "\"~\n\006Action\022\020\n\014JOIN_REQUEST\020\000\022\024\n\020RESET_ME" +
-      "MBERLIST\020\001\022\020\n\014TARGET_JOINS\020\002\022\021\n\rTARGET_L" +
-      "EAVES\020\003\022\020\n\014TARGET_FAILS\020\004\022\025\n\021TARGET_HEAR" +
-      "TBEATS\020\005B+\n\025edu.uiuc.groupmessageB\022Group" +
-      "MessageProtos"
+      "\022\016\n\006argstr\030\004 \003(\t\"\214\002\n\006Action\022\020\n\014JOIN_REQU" +
+      "EST\020\000\022\024\n\020RESET_MEMBERLIST\020\001\022\020\n\014TARGET_JO" +
+      "INS\020\002\022\021\n\rTARGET_LEAVES\020\003\022\020\n\014TARGET_FAILS" +
+      "\020\004\022\025\n\021TARGET_HEARTBEATS\020\005\022\021\n\rMAPLE_REQUE" +
+      "ST\020\006\022\016\n\nMAPLE_WORK\020\007\022\r\n\tNODE_FREE\020\010\022\023\n\017M",
+      "APLE_WORK_DONE\020\t\022\030\n\024MAPLE_PHASE_ONE_DONE" +
+      "\020\n\022\021\n\rMAPLE_F2_WORK\020\013\022\030\n\024MAPLE_PHASE_TWO" +
+      "_DONE\020\014B+\n\025edu.uiuc.groupmessageB\022GroupM" +
+      "essageProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -1441,7 +1577,7 @@ public final class GroupMessageProtos {
           internal_static_GroupMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_GroupMessage_descriptor,
-              new java.lang.String[] { "Target", "Action", "Member", },
+              new java.lang.String[] { "Target", "Action", "Member", "Argstr", },
               edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage.class,
               edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage.Builder.class);
           return null;

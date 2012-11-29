@@ -33,7 +33,7 @@ class MemListServerWorker extends Thread {
       GroupMessage response = currentNode.processMessage(msg);
       if (response != null) {
 	response.writeDelimitedTo(sock_out);
-	sock_out.flush();
+	sock_out.flush();   //?????
       }
 
       // Close I/O
