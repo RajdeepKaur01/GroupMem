@@ -25,7 +25,7 @@ class Maplef2Master extends Thread {
     }
     
     public void run() {
-        currentNode.getmserver().DistributeJob(prefix,phase);
+        currentNode.DistributeJob(prefix,phase);
     }
 }
              

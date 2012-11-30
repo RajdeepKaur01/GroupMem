@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.FileNotFoundException;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -22,6 +23,10 @@ import java.util.Scanner;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.ArrayList;
+import java.io.RandomAccessFile;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
@@ -32,8 +37,10 @@ import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 import edu.uiuc.groupmessage.GroupMessageProtos.Member;
 
 class MemListNode {
+    boolean AllDone;
     int phase = 1;
     private ArrayList<Boolean> JobDone;
+    private ArrayList<Boolean> Jobf2Done;
     private PriorityQueue < job > queue;
 	private Member currentMember;
 	private Member portalMember;
@@ -77,6 +84,9 @@ class MemListNode {
 		server.start();
 		startHeartbeatServer();
 	}
+    public MapleWorker getMapleWorker(){
+        return mworker;
+    }
     
     public MapleMaster getmserver(){
         return mserver;
@@ -90,7 +100,10 @@ class MemListNode {
 	}
     
     public List< Boolean > getJobDone() {
-		return JobDone;
+        if (phase == 1)
+            return JobDone;
+        else
+            return Jobf2Done;
 	}
     
 	public Member getCurrentMember() {
@@ -142,20 +155,49 @@ class MemListNode {
             case MAPLE_WORK:
                 return handleMapleWork(msg.getArgstrList());
             case MAPLE_WORK_DONE:
+                if (phase == 2){
+                    System.out.println("This is Ignored!!!");
+                    return null;
+                }
+                handleMapleWorkDone(msg.getTarget(),msg.getArgstrList());
+                break;
+            case MAPLE_PHASE_TWO_SINGLE_WORK_DONE:
+                if (AllDone){
+                    System.out.println("This is Ignored!!!");
+                    return null;
+                }
                 handleMapleWorkDone(msg.getTarget(),msg.getArgstrList());
                 break;
             case MAPLE_PHASE_ONE_DONE:
+                if (AllDone){
+                    System.out.println("This is Ignored!!!");
+                    return null;
+                }
                 handleMaplePhaseTwo(msg.getArgstrList());
                 break;
             case MAPLE_F2_WORK:
                 return handleMapleF2Work(msg.getArgstrList());
             case MAPLE_PHASE_TWO_DONE:
-                System.out.println("-------Maple is Completely Done-----------");
+                AllDone = true;
+                handleMapleComplete(msg.getArgstrList().get(0));
                 break;
+            case MAPLE_WORK_ABORT:
+                return handleMapleWorkAbort(msg.getTarget());
 		}
 		return null;
 	}
-   
+    public void handleMapleComplete(String prefix){
+        // reset maple to ready state
+        phase = 1;
+        
+        // remove all intermediate files
+        LinkedList<String> workfiles = OprationSDFS("list",prefix,"");
+        for (int i = 0; i < workfiles.size(); i++)
+            OprationSDFS("delete",workfiles.get(i),"");
+       
+        System.out.println("-------Maple is Completely Done-----------");
+    }
+    
     public GroupMessage handleMapleF2Work(List< String > args){
         String prefix = args.get(0);
         String filename = args.get(1);
@@ -173,12 +215,40 @@ class MemListNode {
         
         return msg;
     }
+    
+    public GroupMessage handleMapleWorkAbort(Member member){
+        getMapleWorker().abort();
+        getMapleWorker().interrupt();
+        //getMapleWorker().stop();
+        
+        GroupMessage send_msg = GroupMessage.newBuilder()
+        .setTarget(member)
+        .setAction(GroupMessage.Action.NODE_ABORT)
+        .build();
+        
+        return send_msg;
+    }
+    
     // To be done:
     // synchronize jobqueue when done with current work
     // need to ignore the reply from phase 1(his work is already done by someone else)
     public void handleMaplePhaseTwo(List< String > args){
         // request to abort current phase 1 jobs
         
+        for ( int i = 0; i < getMemberList().size(); i++){
+            GroupMessage send_msg = GroupMessage.newBuilder()
+            .setTarget(currentMember)
+            .setAction(GroupMessage.Action.MAPLE_WORK_ABORT)
+            .build();
+            
+            Member member = getMemberList().get(i);
+            GroupMessage rcv_msg = sendMessageWaitResponse(member, send_msg);
+            if (rcv_msg.getAction() == GroupMessage.Action.NODE_ABORT){
+                System.out.println("Member "+i+" abort.");
+            } else {
+                System.out.println("Member "+i+" does not abort.");
+            }
+        }
         
         // change phase to 2
         phase = 2;
@@ -187,7 +257,7 @@ class MemListNode {
         
         String prefix = args.get(0);
         // get job list
-        LinkedList<String> f2job = getmserver().OprationSDFS("list",prefix,"");        
+        LinkedList<String> f2job = OprationSDFS("list",prefix,"");        
         trimKey(f2job);
         RemoveDuplicate(f2job);
         
@@ -198,15 +268,99 @@ class MemListNode {
         }
         
         // Initial JobDone List
-        JobDone = new ArrayList<Boolean>();
+        Jobf2Done = new ArrayList<Boolean>();
         for (int i = 0; i < f2job.size(); i++)
-            JobDone.add(false);
-        System.out.println("JobDone has "+JobDone.size()+" jobs.");
+            Jobf2Done.add(false);
+        System.out.println("Jobf2Done has "+Jobf2Done.size()+" jobs.");
         System.out.println("queue has "+queue.size()+" jobs.");
         
         mf2server = new Maplef2Master(this,args.get(0),phase);
 		mf2server.start();
     }
+    
+    
+    public void DistributeJob(String prefix,int phase){
+        
+        LinkedList< Member > memberList = getMemberList();
+        for (int i = 0 ; i < memberList.size(); i++)
+		{
+            // find proper job
+            job TopJob = findjob(phase, prefix);
+            if (TopJob == null)
+                return;
+            
+            Member member = memberList.get(i);
+            GroupMessage send_msg = null;
+            if (phase == 1){
+                //System.out.println("Distribute Maple Job Message in Phase 1!!!!!!!!!!!!!");
+                send_msg = GroupMessage.newBuilder()
+                .setTarget(member)
+                .addArgstr(prefix)// pass prefix
+                .addArgstr(TopJob.getname()) // pass filename
+                .addArgstr(Integer.toString(TopJob.getid()))// pass job id
+                .setAction(GroupMessage.Action.MAPLE_WORK)
+                .build();
+            } else if (phase == 2){
+                //System.out.println("Distribute Maple Job Message in Phase 2!!!!!!!!!!!!!");
+                send_msg = GroupMessage.newBuilder()
+                .setTarget(member)
+                .addArgstr(prefix)// pass prefix
+                .addArgstr(TopJob.getname()) // pass filename
+                .addArgstr(Integer.toString(TopJob.getid()))// pass job id
+                .setAction(GroupMessage.Action.MAPLE_F2_WORK)
+                .build();
+            } 
+            
+            GroupMessage rcv_msg = sendMessageWaitResponse(member, send_msg);
+            if (rcv_msg.getAction() == GroupMessage.Action.NODE_FREE){
+                System.out.println("Member "+i+" ack.");
+            } else {
+                System.out.println("Member "+i+" does not ack. Should Not Happen!!!!");
+            }
+            
+            // update job time
+            TopJob = getQ().remove();
+            TopJob.settime(System.currentTimeMillis());
+            getQ().add(TopJob);
+		}
+    }
+    
+    public job findjob(int phase, String prefix){
+        job TopJob = getQ().peek();
+        while ((TopJob == null) || (getJobDone().get(TopJob.getid()) == true)){
+            if (TopJob == null){
+                System.out.println("Queue is empty");
+                
+                GroupMessage msg = null;
+                // send message to master to begin phase 2
+                if (phase == 1){
+                    msg = GroupMessage.newBuilder()
+                    .setTarget(getCurrentMember())
+                    .addArgstr(prefix)
+                    .setAction(GroupMessage.Action.MAPLE_PHASE_ONE_DONE)
+                    .build();
+                    sendMessageTo(msg,getMemberList().get(0));
+                } else if (phase == 2){ 
+                    msg = GroupMessage.newBuilder()
+                    .setTarget(getCurrentMember())
+                    .addArgstr(prefix)
+                    .setAction(GroupMessage.Action.MAPLE_PHASE_TWO_DONE)
+                    .build();
+                    
+                    for (int i = 0; i < getMemberList().size(); i++)
+                        sendMessageTo(msg,getMemberList().get(i));
+                } 
+                
+                return null;
+            } else if (getJobDone().get(TopJob.getid()) == true){
+                System.out.println("Job "+TopJob.getid()+" is done. Throw it out.");
+                getQ().remove();
+                TopJob = getQ().peek();
+            }
+        }
+        return TopJob;
+    }
+    
     
     public void trimKey(LinkedList<String> joblist){
         String delims = "_";
@@ -232,13 +386,16 @@ class MemListNode {
         
         // mark the work in JobDone as true
         System.out.println(args.get(0)+" is done, its id is "+ args.get(1));
-        JobDone.set(Integer.parseInt(args.get(1)),true);
+        if (phase == 1)
+            JobDone.set(Integer.parseInt(args.get(1)),true);
+        else if (phase == 2)
+            Jobf2Done.set(Integer.parseInt(args.get(1)),true);
         // send new possible job
         sendNewWork(sender,args.get(2));
     }
     
     public void sendNewWork(Member member,String prefix){
-        job TopJob = this.mserver.findjob(phase);
+        job TopJob = findjob(phase, prefix);
         if (TopJob == null)
             return;
         
@@ -266,6 +423,49 @@ class MemListNode {
         sendMessageTo(msg,member);
     }
     
+    public LinkedList<String> OprationSDFS(String op,String str1, String str2)
+    {
+        System.out.println("Operation: "+op+" "+str1+" "+str2);
+        LinkedList<String> returnlist = new LinkedList<String>();
+        Runtime runtime = Runtime.getRuntime();
+        Process process = null;
+        BufferedWriter output = null;
+        try {
+            LinkedList< String > cmd_array = new LinkedList< String >();
+            cmd_array.add("java");
+            cmd_array.add("-cp");
+            cmd_array.add("../GroupMem-mp3/bin:lib/protobuf-java-2.4.1.jar");
+            cmd_array.add("edu.uiuc.groupmessage.SDFSClient");
+            cmd_array.add(getMemberList().get(0).getIp());
+            cmd_array.add("6611");
+            cmd_array.add(op);
+            cmd_array.add(str1);
+            if ((op.equals("put"))||(op.equals("get")))
+                cmd_array.add(str2);
+            process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
+            
+            
+            try{
+                process.waitFor();
+            } catch (InterruptedException e) {
+                    // stop the process and return
+                    process.destroy();
+                    System.out.println("Process is destroyed.------");
+                    return null;
+            }
+            
+            
+            BufferedReader result = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+			while((line = result.readLine()) != null) {
+				returnlist.add(line);
+			}            
+        } catch(IOException ex) {
+            System.out.println("Unable to "+op+" "+str1+" "+str2+" in SDFS.\n");
+        }
+        return returnlist;
+    }
+    
     public GroupMessage handleMapleWork(List< String > args){
         System.out.println("I receive prefix:"+ args.get(0)+", job name "+ args.get(1)+", it's id "+ args.get(2));
         
@@ -281,6 +481,8 @@ class MemListNode {
     }
     
     public void handleInitMapleRequest(List< String > args){
+        // reset Maple done flag
+        AllDone = false;
         
         // create a job priority queue
         queue = new PriorityQueue<job>();

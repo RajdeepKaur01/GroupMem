@@ -31,12 +31,12 @@ class Maplef2Worker  extends Thread {
         System.out.println("I am in the Maple Worker. f2");
         System.out.println("work is "+work);
         
-        LinkedList<String> workfiles = currentNode.getmserver().OprationSDFS("list",work,"");
+        LinkedList<String> workfiles = currentNode.OprationSDFS("list",work,"");
         String filename = "done_"+work;
         try{
             RandomAccessFile raf = new RandomAccessFile(filename, "rws");
             for (int i = 0; i < workfiles.size(); i++){
-                currentNode.getmserver().OprationSDFS("get",workfiles.get(i),workfiles.get(i));
+                currentNode.OprationSDFS("get",workfiles.get(i),workfiles.get(i));
                 //System.out.println(workfiles.get(i));
                 BufferedReader s = new BufferedReader(new FileReader(workfiles.get(i)));
                 raf.seek(raf.length());
@@ -51,9 +51,10 @@ class Maplef2Worker  extends Thread {
                     System.out.println(file.getName() + " is deleted!");
                 else
                     System.out.println("Delete "+file.getName()+" is failed.");
-                
+                // Don't do this. this will delete the files might be done by other worker
+                // instead do this after Maple Phase2 is done
                 // delete it from SDFS
-                currentNode.getmserver().OprationSDFS("delete",workfiles.get(i),"");
+                // currentNode.OprationSDFS("delete",workfiles.get(i),"");
             }
             raf.close();
         } catch (FileNotFoundException e) {
@@ -61,7 +62,7 @@ class Maplef2Worker  extends Thread {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-        currentNode.getmserver().OprationSDFS("put",filename,filename);
+        currentNode.OprationSDFS("put",filename,filename);
         // remove it from local
         File file = new File(filename);
         if(file.delete())
@@ -76,7 +77,7 @@ class Maplef2Worker  extends Thread {
         .addArgstr(filename)
         .addArgstr(jobid)
         .addArgstr(prefix)
-        .setAction(GroupMessage.Action.MAPLE_WORK_DONE)
+        .setAction(GroupMessage.Action.MAPLE_PHASE_TWO_SINGLE_WORK_DONE)
         .build();
         
         currentNode.sendMessageTo(msg,currentNode.getMemberList().get(0));

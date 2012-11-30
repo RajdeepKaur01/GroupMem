@@ -23,6 +23,9 @@ message GroupMessage {
     MAPLE_PHASE_ONE_DONE = 10;
     MAPLE_F2_WORK = 11;
     MAPLE_PHASE_TWO_DONE = 12;
+    NODE_ABORT = 13;
+    MAPLE_WORK_ABORT = 14;
+    MAPLE_PHASE_TWO_SINGLE_WORK_DONE = 15;
   }
   required Action action = 2 [default = TARGET_HEARTBEATS];
   repeated Member member = 3;

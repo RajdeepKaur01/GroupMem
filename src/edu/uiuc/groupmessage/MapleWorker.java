@@ -22,19 +22,17 @@ class MapleWorker extends Thread {
         this.jobid = id;
         abort = false;
     }
-    /*
-    public void cancel(){
+    
+    public void abort(){
         abort = true;
-        // stop the tf thread first?????
-        System.out.println("I am abort!!!!!!!!!!!!!!!!!!!!!!!!--------------------");
-        this.stop();
-    }*/
+        System.out.println("I am abort!!!!!!!!!!!!!!!!!!!!!!!!-------------");
+    }
     
     public void run() {
         // get MapleExe
         System.out.println("I am in the Maple Worker");
         System.out.println("Prefix is "+prefix+", work is "+work);
-        currentNode.getmserver().OprationSDFS("get","MapleExe","tf.class");  
+        currentNode.OprationSDFS("get","MapleExe","tf.class");  
         runMaple();
         
         // find the prefix_key_jobid(because ip might be same)
@@ -65,8 +63,10 @@ class MapleWorker extends Thread {
         } );
         for ( File file : files ){
             System.out.println(file.getName() + " is in current folder");
-            currentNode.getmserver().OprationSDFS("put",file.getName(),file.getName()+"_"+jobid);
+            if (abort) return;
+            currentNode.OprationSDFS("put",file.getName(),file.getName()+"_"+jobid);
             // remove from local, so that next time check file start with prefix, they are not uploaded again
+            if (abort) return;
             if(file.delete())
                 System.out.println(file.getName() + " is deleted!!!!!!!!!!!!!");
             else
@@ -86,9 +86,18 @@ class MapleWorker extends Thread {
             cmd_array.add(prefix);
             cmd_array.add(work);
             process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
-            process.waitFor();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            while (abort == false){
+                try{
+                    process.waitFor();
+                    break;
+                } catch (InterruptedException e) {
+                    if (abort == true){
+                        // stop the process and return
+                        process.destroy();
+                        System.out.println("Process is destroyed.------");
+                    }
+                }
+            }
         } catch(IOException ex) {
             System.out.println("Unable to run mapleExe.\n");
         }
