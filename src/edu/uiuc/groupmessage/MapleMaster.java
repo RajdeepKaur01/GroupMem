@@ -38,6 +38,7 @@ class MapleMaster extends Thread {
         String filename = "JobList";
         // remove last time "JobList"
         WriteJobList(filename);
+        currentNode.OprationSDFS("delete","JobList_SDFS","");
         currentNode.OprationSDFS("put",filename,"JobList_SDFS");       
         
         // send job message and wait
@@ -50,7 +51,6 @@ class MapleMaster extends Thread {
             RandomAccessFile raf = new RandomAccessFile(filename, "rws");
             
             for (int i = 2; i < args.size(); i++){
-                //System.out.println("args("+i+") = "+args.get(i));
                 String filen = args.get(1)+"_"+args.get(i)+"\n";
                 raf.writeBytes(filen);
             }
