@@ -1084,13 +1084,13 @@ class MemListNode {
             memberListForAbort = new LinkedList<Member>();
             for (int i = 0; i < memberList.size(); i++)
                 memberListForAbort.add(memberList.get(i));
-            if(JuiceRun)
+            if(JuiceRun == true)
             	abortEveryJuiceWorker(state);
             else
             	abortEveryWorker(state);
             
             // If Juice, initiate the request
-            if(JuiceRun){
+            if(JuiceRun == true){
             	if(state == 1)
             	{
                     OprationSDFS("get",JobLog,JobLog);
