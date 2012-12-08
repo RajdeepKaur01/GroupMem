@@ -588,6 +588,12 @@ public final class GroupMessageProtos {
       MAPLE_PHASE_TWO_SINGLE_WORK_DONE(15, 15),
       ABORT_CONFIRM(16, 16),
       ALL_ABORT(17, 17),
+      JUICE_REQUEST(18, 18),
+      JUICE_WORK(19, 19),
+      JUICE_WORK_DONE(20, 20),
+      JUICE_PHASE_ONE_DONE(21, 21),
+      JUICE_WORK_ABORT(22, 22),
+      JUICE_F2_WORK(23, 23),
       ;
       
       public static final int JOIN_REQUEST_VALUE = 0;
@@ -608,6 +614,12 @@ public final class GroupMessageProtos {
       public static final int MAPLE_PHASE_TWO_SINGLE_WORK_DONE_VALUE = 15;
       public static final int ABORT_CONFIRM_VALUE = 16;
       public static final int ALL_ABORT_VALUE = 17;
+      public static final int JUICE_REQUEST_VALUE = 18;
+      public static final int JUICE_WORK_VALUE = 19;
+      public static final int JUICE_WORK_DONE_VALUE = 20;
+      public static final int JUICE_PHASE_ONE_DONE_VALUE = 21;
+      public static final int JUICE_WORK_ABORT_VALUE = 22;
+      public static final int JUICE_F2_WORK_VALUE = 23;
       
       
       public final int getNumber() { return value; }
@@ -632,6 +644,12 @@ public final class GroupMessageProtos {
           case 15: return MAPLE_PHASE_TWO_SINGLE_WORK_DONE;
           case 16: return ABORT_CONFIRM;
           case 17: return ALL_ABORT;
+          case 18: return JUICE_REQUEST;
+          case 19: return JUICE_WORK;
+          case 20: return JUICE_WORK_DONE;
+          case 21: return JUICE_PHASE_ONE_DONE;
+          case 22: return JUICE_WORK_ABORT;
+          case 23: return JUICE_F2_WORK;
           default: return null;
         }
       }
@@ -662,7 +680,7 @@ public final class GroupMessageProtos {
       }
       
       private static final Action[] VALUES = {
-        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, MAPLE_REQUEST, MAPLE_WORK, NODE_FREE, MAPLE_WORK_DONE, MAPLE_PHASE_ONE_DONE, MAPLE_F2_WORK, MAPLE_PHASE_TWO_DONE, NODE_ABORT, MAPLE_WORK_ABORT, MAPLE_PHASE_TWO_SINGLE_WORK_DONE, ABORT_CONFIRM, ALL_ABORT, 
+        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, MAPLE_REQUEST, MAPLE_WORK, NODE_FREE, MAPLE_WORK_DONE, MAPLE_PHASE_ONE_DONE, MAPLE_F2_WORK, MAPLE_PHASE_TWO_DONE, NODE_ABORT, MAPLE_WORK_ABORT, MAPLE_PHASE_TWO_SINGLE_WORK_DONE, ABORT_CONFIRM, ALL_ABORT, JUICE_REQUEST, JUICE_WORK, JUICE_WORK_DONE, JUICE_PHASE_ONE_DONE, JUICE_WORK_ABORT, JUICE_F2_WORK, 
       };
       
       public static Action valueOf(
@@ -1560,11 +1578,11 @@ public final class GroupMessageProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\023group_message.proto\"5\n\006Member\022\n\n\002ip\030\001 " +
-      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\206\004\n" +
+      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\201\005\n" +
       "\014GroupMessage\022\027\n\006target\030\001 \002(\0132\007.Member\0227" +
       "\n\006action\030\002 \002(\0162\024.GroupMessage.Action:\021TA" +
       "RGET_HEARTBEATS\022\027\n\006member\030\003 \003(\0132\007.Member" +
-      "\022\016\n\006argstr\030\004 \003(\t\"\372\002\n\006Action\022\020\n\014JOIN_REQU" +
+      "\022\016\n\006argstr\030\004 \003(\t\"\365\003\n\006Action\022\020\n\014JOIN_REQU" +
       "EST\020\000\022\024\n\020RESET_MEMBERLIST\020\001\022\020\n\014TARGET_JO" +
       "INS\020\002\022\021\n\rTARGET_LEAVES\020\003\022\020\n\014TARGET_FAILS" +
       "\020\004\022\025\n\021TARGET_HEARTBEATS\020\005\022\021\n\rMAPLE_REQUE" +
@@ -1573,9 +1591,12 @@ public final class GroupMessageProtos {
       "\020\n\022\021\n\rMAPLE_F2_WORK\020\013\022\030\n\024MAPLE_PHASE_TWO" +
       "_DONE\020\014\022\016\n\nNODE_ABORT\020\r\022\024\n\020MAPLE_WORK_AB" +
       "ORT\020\016\022$\n MAPLE_PHASE_TWO_SINGLE_WORK_DON" +
-      "E\020\017\022\021\n\rABORT_CONFIRM\020\020\022\r\n\tALL_ABORT\020\021B+\n" +
-      "\025edu.uiuc.groupmessageB\022GroupMessageProt" +
-      "os"
+      "E\020\017\022\021\n\rABORT_CONFIRM\020\020\022\r\n\tALL_ABORT\020\021\022\021\n" +
+      "\rJUICE_REQUEST\020\022\022\016\n\nJUICE_WORK\020\023\022\023\n\017JUIC" +
+      "E_WORK_DONE\020\024\022\030\n\024JUICE_PHASE_ONE_DONE\020\025\022" +
+      "\024\n\020JUICE_WORK_ABORT\020\026\022\021\n\rJUICE_F2_WORK\020\027" +
+      "B+\n\025edu.uiuc.groupmessageB\022GroupMessageP" +
+      "rotos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

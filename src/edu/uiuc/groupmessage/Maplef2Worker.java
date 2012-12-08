@@ -1,17 +1,13 @@
 package edu.uiuc.groupmessage;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.LinkedList;
-import java.util.Scanner;
 
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
-import edu.uiuc.groupmessage.GroupMessageProtos.Member;
 
 class Maplef2Worker  extends Thread {
     String phase2doneprefix = "phase2_";
@@ -81,8 +77,9 @@ class Maplef2Worker  extends Thread {
                     // then delete this file locally
                     currentNode.deletefile(workfiles.get(i));
                     
-                // Don't delete the phase 1 intermediate files 
-                // it might be done by other worker
+                    // Don't delete the phase 1 intermediate files 
+                    // it might be done by other worker
+                    s.close();
                 }
                 raf.close();
             } catch (FileNotFoundException e) {

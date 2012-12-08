@@ -2,29 +2,28 @@ package edu.uiuc.groupmessage;
 
 import java.util.LinkedList;
 import java.io.IOException;
-import java.io.FilenameFilter;
-import java.io.File;
 import java.io.RandomAccessFile;
 
+import java.io.File;
 
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 
-class MapleWorker extends Thread {
-    String phase1doneprefix = "phase1_";
+class JuiceWorker extends Thread {
+    String phase1doneprefix = "tfidf_";
     boolean done;
     boolean abort;
     String prefix;
     String work;
     String jobid;
     MemListNode currentNode;
-    MapleWorker(MemListNode current_node, String prefix, String work, String id) {
+    JuiceWorker(MemListNode current_node, String prefix, String work, String id) {
         super();
         this.currentNode = current_node;
         this.work = work;
         this.prefix = prefix;
         this.jobid = id;
-        abort = false;
         done = false;
+        abort = false;
     }
     
     public void abort(){
@@ -40,38 +39,28 @@ class MapleWorker extends Thread {
     
     public void run() {
         done = false;
-        String mark_done = phase1doneprefix+"done_"+work;
+        String mark_done = phase1doneprefix+ work;
         // first check if the job is aleady done by someone else before master failed
         LinkedList<String> returnlist = currentNode.OprationSDFS("list",mark_done,"");
         if (returnlist.size() == 0){// not done
-              
+            
             if (abort) {
                 currentNode.sendAbortMessage();
                 return;
             }
-            // get MapleExe
-            System.out.println("I am in the Maple Worker");
+            // get JuiceExe
+            System.out.println("I am in the Juice Worker");
             System.out.println("Prefix is "+prefix+", work is "+work);
-            currentNode.OprationSDFS("get","MapleExe","tf.class"); 
+            currentNode.OprationSDFS("get","JuiceExe","tf_idf.class"); 
             if (abort) {
-                currentNode.sendAbortMessage();
-                return;
+            	currentNode.sendAbortMessage();
+            	return;
             }
-            
-            runMaple();
+            runJuice();
             if (abort) {
-                currentNode.sendAbortMessage();
-                return;
+            	currentNode.sendAbortMessage();
+            	return;
             }
-            
-            // find the prefix_key_jobid(because ip might be same)
-            // Also put them into SDFS
-            FindFileAndPut(prefix);
-            if (abort) {
-                currentNode.sendAbortMessage();
-                return;
-            }
-            
             // put job done file into SDFS
             try {
                 RandomAccessFile raf = new RandomAccessFile(mark_done, "rws");
@@ -83,10 +72,10 @@ class MapleWorker extends Thread {
             currentNode.deletefile(mark_done);
         } else
             System.out.println(mark_done+" is already exist!");
-          
+        
         if (abort) {
-            currentNode.sendAbortMessage();
-            return;
+        	currentNode.sendAbortMessage();
+        	return;
         }
         // Send back workdone message and ask for new work
         GroupMessage msg = GroupMessage.newBuilder()
@@ -94,50 +83,23 @@ class MapleWorker extends Thread {
         .addArgstr(work)
         .addArgstr(jobid)
         .addArgstr(prefix)
-        .setAction(GroupMessage.Action.MAPLE_WORK_DONE)
+        .setAction(GroupMessage.Action.JUICE_WORK_DONE)
         .build();
         
         currentNode.sendMessageTo(msg,currentNode.getMemberList().get(0));
         done = true;
     }
     
-    public void FindFileAndPut(final String prefix)
-	{
-		String pathname = System.getProperty("user.dir");
-        File folder = new File(pathname);
-        File [] files = folder.listFiles(new FilenameFilter() {
-            @Override
-         	public boolean accept( File dir, String name ) {
-                return name.startsWith(prefix);
-            }
-        } );
-        for ( File file : files ){
-            //System.out.println(file.getName() + " is in current folder");
-            
-            if (abort) {
-                currentNode.sendAbortMessage();
-                return;
-            }
-            
-            currentNode.OprationSDFS("put",file.getName(),file.getName()+"_"+jobid);
-            // remove from local, so that next time check file start with prefix, they are not uploaded again
-            if(file.delete())
-                System.out.println(file.getName() + " is deleted!!!!!!!!!!!!!");
-            else
-                System.out.println("Delete "+file.getName()+" is failed.!!!!!!!!!!!!!!!!!");
-        }
-	}
     
-    
-    public void runMaple(){
-        System.out.println("Operation : java tf "+prefix+" "+work);
+    public void runJuice(){
+        System.out.println("Operation :java tf_idf "+ work);
         Runtime runtime = Runtime.getRuntime();
         Process process = null;
+        currentNode.OprationSDFS("get",work,work);  
         try {
             LinkedList< String > cmd_array = new LinkedList< String >();
             cmd_array.add("java");
-            cmd_array.add("tf");
-            cmd_array.add(prefix);
+            cmd_array.add("tf_idf");
             cmd_array.add(work);
             process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
             while (abort == false){
@@ -153,7 +115,10 @@ class MapleWorker extends Thread {
                 }
             }
         } catch(IOException ex) {
-            System.out.println("Unable to run mapleExe.\n");
+            System.out.println("Unable to run juiceExe.\n");
         }
+        currentNode.OprationSDFS("put","tfidf_" + work, "tfidf_" + work);
+        File tf_file = new File(work);
+        tf_file.delete();      
     }
 }

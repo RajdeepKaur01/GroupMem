@@ -56,7 +56,12 @@ CLASSES = \
 	job.java\
 	MapleMaster.java\
 	MapleWorker.java\
-	Maplef2Master.java
+	Maplef2Master.java\
+  JuiceMaster.java\
+  JuiceWorker.java\
+  JuiceF2Worker.java
+
+
 
 
 #

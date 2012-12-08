@@ -28,9 +28,14 @@ message GroupMessage {
     MAPLE_PHASE_TWO_SINGLE_WORK_DONE = 15;
     ABORT_CONFIRM = 16;
     ALL_ABORT = 17;
+    JUICE_REQUEST = 18;
+    JUICE_WORK = 19;
+    JUICE_WORK_DONE = 20;
+    JUICE_PHASE_ONE_DONE = 21;
+    JUICE_WORK_ABORT = 22;
+    JUICE_F2_WORK = 23;
   }
   required Action action = 2 [default = TARGET_HEARTBEATS];
   repeated Member member = 3;
   repeated string argstr = 4;
 }
-
