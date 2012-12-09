@@ -1,9 +1,9 @@
 package edu.uiuc.groupmessage;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
-import java.io.RandomAccessFile;
-
 
 // distribute the initial jobs
 class MapleMaster extends Thread {
@@ -21,6 +21,7 @@ class MapleMaster extends Thread {
     
     // phase 1, every one get a job, phase 2 every one find some files to merge
     public void run() {
+      try {
         System.out.println("MapleMaster is up");
         
         // put exe into SDFS
@@ -35,18 +36,20 @@ class MapleMaster extends Thread {
         
         // send job message and wait
         currentNode.DistributeJob(prefix,phase);
+      } catch (InterruptedException ex) {
+        ex.printStackTrace();
+      }
     }
     
     public void WriteJobList(String filename)
     {
         try {
-            RandomAccessFile raf = new RandomAccessFile(filename, "rws");
-            
+            BufferedWriter buf_writer = new BufferedWriter(new FileWriter(filename));
             for (int i = 2; i < args.size(); i++){
                 String filen = args.get(1)+"_"+args.get(i)+"\n";
-                raf.writeBytes(filen);
+                buf_writer.write(filen);
             }
-            raf.close();
+            buf_writer.close();
         } catch (IOException ex) {
             System.out.println("Unable to write JobList\n");
         }
