@@ -104,6 +104,8 @@ class MemListNode {
   }
 
   public GroupMessage processMessage(GroupMessage msg) {
+    if (msg == null)
+      return null;
     switch(msg.getAction()) {
     case JOIN_REQUEST:
       return handleJoinRequest(msg.getTarget());
