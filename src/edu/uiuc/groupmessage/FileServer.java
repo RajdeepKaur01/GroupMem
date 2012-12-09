@@ -10,6 +10,9 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 import edu.uiuc.groupmessage.GroupMessageProtos.Member;
 
@@ -135,6 +138,25 @@ class FileServer extends Thread {
 	    } catch (Exception ex) {
 	      System.out.println(ex.getMessage());
 	    }
+
+            // Unpack the file if it's a tarball
+            if (fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz")) {
+              Runtime runtime = Runtime.getRuntime();
+              try {
+                ArrayList< String > cmd_array = new ArrayList< String >();
+                cmd_array.add("tar");
+                cmd_array.add("zxf");
+                cmd_array.add(currentNode.getDirPath() + "/" + fileName);
+                cmd_array.add("-C");
+                cmd_array.add(currentNode.getDirPath() + "/");
+                Process process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
+                process.waitFor();
+              } catch (InterruptedException ex) {
+                ex.printStackTrace();
+              } catch (IOException ex) {
+                ex.printStackTrace();
+              }
+            }
 
             // Hand the file name back to the current node to process
             switch (action) {

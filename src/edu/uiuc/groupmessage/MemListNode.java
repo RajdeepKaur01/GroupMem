@@ -340,9 +340,17 @@ class MemListNode {
     }
     
     // Prepare for the PUSH_FILE
-    LOGGER.info("Pushing file to " + target.getIp() + "_" + target.getPort());
-    FileClient client = new FileClient(target, file_name, saved_file, GroupMessage.Action.PUSH_FILE_VALUE);
-    client.start();
+    if (file_name.endsWith(".tar.gz") || file_name.endsWith(".tgz")) {
+      LOGGER.info("Pushing the tarball file " + file_name  + " to everyone");
+      for (Member member : memberList) {
+        FileClient client = new FileClient(member, file_name, saved_file, GroupMessage.Action.PUSH_FILE_VALUE);
+        client.start();
+      }
+    } else {
+      LOGGER.info("Pushing file to " + target.getIp() + "_" + target.getPort());
+      FileClient client = new FileClient(target, file_name, saved_file, GroupMessage.Action.PUSH_FILE_VALUE);
+      client.start();
+    }
   }
 
   public void handleHeartbeats(Member sender) {
