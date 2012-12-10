@@ -42,9 +42,9 @@ class MapleWorker extends Thread {
   public void run() {
     try {
       done = false;
-      String mark_done = phase1doneprefix + "done_" + work;
+      String mark_done = phase1doneprefix + "done_" + (new File(work)).getName();
       // first check if the job is aleady done by someone else before master failed
-      LinkedList<String> returnlist = currentNode.OprationSDFS("list",mark_done,"");
+      LinkedList<String> returnlist = currentNode.OprationSDFS("list", mark_done, "");
       if (returnlist.size() == 0) {// not done
 
         if (abort) {
@@ -53,7 +53,7 @@ class MapleWorker extends Thread {
         }
         // get MapleExe
         System.out.println("I am in the Maple Worker");
-        System.out.println("Prefix is "+prefix+", work is "+work);
+        System.out.println("Prefix is " + prefix + ", work is " + work);
         currentNode.OprationSDFS("get","MapleExe","tf.class"); 
         if (abort) {
           currentNode.sendAbortMessage();

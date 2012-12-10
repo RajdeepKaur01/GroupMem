@@ -77,7 +77,6 @@ public class tf
     Set<String> keys = keyMap.keySet();
     for(String key : keys) {
       String filename = prefix + "_" + key + "_" + job_id;
-      System.out.println(filename);
       int wordc = (Integer) keyMap.get(key);
       FileWriter buf_writer = new FileWriter(filename);
       buf_writer.write(Double.toString((double)wordc/(double)wordtotal)+"\t" + doc + "\n");

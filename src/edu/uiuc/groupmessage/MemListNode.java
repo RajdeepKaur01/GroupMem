@@ -755,6 +755,15 @@ class MemListNode {
         cmd_array.add(str2);
       process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
 
+      System.out.println("Starting reading file list");
+      BufferedReader result = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      String line;
+      while((line = result.readLine()) != null) {
+        returnlist.add(line);
+      }            
+      result.close();
+      System.out.println("Finished reading file list");
+
       try{
         process.waitFor();
       } catch (InterruptedException e) {
@@ -764,11 +773,6 @@ class MemListNode {
         throw new InterruptedException();
       }
 
-      BufferedReader result = new BufferedReader(new InputStreamReader(process.getInputStream()));
-      String line;
-      while((line = result.readLine()) != null) {
-        returnlist.add(line);
-      }            
     } catch(IOException ex) {
       System.out.println("Unable to "+op+" "+str1+" "+str2+" in SDFS.\n");
     }
