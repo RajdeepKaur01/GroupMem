@@ -40,6 +40,7 @@ class MemListNode {
   String StateLog = "_StateLog_";
   int phase = 0;
   String GloPrefix;
+  public boolean debug = false;
   private ArrayList<Boolean> JobDone;
   private ArrayList<Boolean> Jobf2Done;
   private PriorityQueue < job > queue;
@@ -186,14 +187,16 @@ class MemListNode {
       return handleMapleWork(msg.getArgstrList());
     case MAPLE_WORK_DONE:
       if (phase == 2){
-        System.out.println("I am in Phase "+phase+". This is Ignored!!!");
+        if (debug)
+          System.out.println("I am in Phase "+phase+". This is Ignored!!!");
         return null;
       }
       handleMapleWorkDone(msg.getTarget(),msg.getArgstrList());
       break;
     case MAPLE_PHASE_ONE_DONE:
       if (phase != 1){
-        System.out.println("I am in Phase "+phase+". This is Ignored!!!");
+        if (debug)
+          System.out.println("I am in Phase "+phase+". This is Ignored!!!");
         return null;
       }
       handleMaplePhaseTwo(msg.getArgstrList());
@@ -202,14 +205,16 @@ class MemListNode {
       return handleMapleF2Work(msg.getArgstrList());
     case MAPLE_PHASE_TWO_SINGLE_WORK_DONE:
       if (phase != 2){
-        System.out.println("I am in Phase "+phase+". This is Ignored!!!");
+        if (debug)
+          System.out.println("I am in Phase "+phase+". This is Ignored!!!");
         return null;
       }
       handleMapleWorkDone(msg.getTarget(),msg.getArgstrList());
       break;
     case MAPLE_PHASE_TWO_DONE:
       if (phase != 2){
-        System.out.println("I am in Phase "+phase+". This is Ignored!!!");
+        if (debug)
+          System.out.println("I am in Phase "+phase+". This is Ignored!!!");
         return null;
       }
       handleMapleComplete(msg.getArgstrList().get(0));
@@ -230,14 +235,16 @@ class MemListNode {
       return handleJuiceWork(msg.getArgstrList());
     case JUICE_WORK_DONE:
       if (phase == 2){
-        System.out.println("This is Ignored!!!");
+        if (debug)
+          System.out.println("This is Ignored!!!");
         return null;
       }
       handleJuiceWorkDone(msg.getTarget(),msg.getArgstrList());
       break;
     case JUICE_PHASE_ONE_DONE:
       if (phase != 1){
-        System.out.println("I am in Phase "+phase+". This is Ignored!!!");
+        if (debug)
+          System.out.println("I am in Phase "+phase+". This is Ignored!!!");
         return null;
       }
       handleJuicePhaseTwo(msg.getArgstrList());
@@ -270,7 +277,8 @@ class MemListNode {
       for (int i = 0; i <= 2; i++){
         returnlist = OprationSDFS("list",StateLog+i,"");
         if (returnlist.size() != 0){
-          System.out.println("Get "+StateLog+i);
+          if (debug)
+            System.out.println("Get "+StateLog+i);
           state = i;
           break;
         }
@@ -398,8 +406,8 @@ class MemListNode {
     String prefix = args.get(0);
     String filename = args.get(1);
     String id = args.get(2);
-
-    System.out.println("I receive job name "+ filename +", it's id "+ id);
+    if (debug)
+      System.out.println("I receive job name "+ filename +", it's id "+ id);
 
     GroupMessage msg = GroupMessage.newBuilder()
       .setTarget(currentMember)
@@ -671,9 +679,9 @@ class MemListNode {
   }
 
   public void handleJuiceWorkDone(Member sender, List< String > args){
-
     // mark the work in JobDone as true
-    System.out.println(args.get(0)+" is done, its id is "+ args.get(1));
+    phase_count++;
+    System.out.println(args.get(0)+" is done, its id is "+ args.get(1) + "phase count = " + phase_count);
     if (phase == 1)
       JobDone.set(Integer.parseInt(args.get(1)),true);
     else if (phase == 2)
@@ -732,7 +740,8 @@ class MemListNode {
 
   public ArrayList<String> OprationSDFS(String op,String str1, String str2) throws InterruptedException
   {
-    System.out.println("Operation: "+op+" "+str1+" "+str2);
+    if (debug)
+      System.out.println("Operation: "+op+" "+str1+" "+str2);
     ArrayList<String> returnlist = new ArrayList<String>();
     Runtime runtime = Runtime.getRuntime();
     Process process = null;
@@ -776,7 +785,8 @@ class MemListNode {
     // when first get a maple job, record GloPrefix
     GloPrefix = args.get(0);
     // update non-master node phase
-    System.out.println("I receive prefix:"+ args.get(0)+", job name "+ args.get(1)+", it's id "+ args.get(2));
+    if (debug)
+      System.out.println("I receive prefix:"+ args.get(0)+", job name "+ args.get(1)+", it's id "+ args.get(2));
 
     GroupMessage msg = GroupMessage.newBuilder()
       .setTarget(currentMember)
@@ -793,8 +803,8 @@ class MemListNode {
     // when first get a maple job, record GloPrefix
     GloPrefix = args.get(0);
     // update non-master node phase
-
-    System.out.println("I receive prefix:"+ args.get(0)+", job name "+ args.get(1)+", it's id "+ args.get(2));
+    if (debug)
+      System.out.println("I receive prefix:"+ args.get(0)+", job name "+ args.get(1)+", it's id "+ args.get(2));
 
     GroupMessage msg = GroupMessage.newBuilder()
       .setTarget(currentMember)
@@ -811,15 +821,15 @@ class MemListNode {
     System.out.println("----------- Phase One Started-----------");
 
     // create job log and put into SDFS
-    createJobLogAndPut(JobLog,args);
+    createJobLogAndPut(JobLog, args);
 
     // set phase and put into SDFS
     phase = 1;
-    createStateLogAndPut(StateLog,phase);
+    createStateLogAndPut(StateLog, phase);
 
     // create a job priority queue
     queue = new PriorityQueue<job>();
-    CreateJobQ(args,2,args.size());
+    CreateJobQ(args, 2, args.size());
 
     // Initial JobDone List
     JobDone = new ArrayList<Boolean>();
@@ -867,19 +877,20 @@ class MemListNode {
 
     // Create a special JUICERUN file and put to SDFS
     CreateSpecialJuiceFile();
+
     // create job log and put into SDFS
-    createJobLogAndPut(JobLog,args);
+    createJobLogAndPut(JobLog, args);
 
     // set phase and put into SDFS
     phase = 1;
-    createStateLogAndPut(StateLog,phase);
-    List<String> arguments = new LinkedList< String >();
+    createStateLogAndPut(StateLog, phase);
+    List<String> arguments = new ArrayList< String >();
 
     // Get all files for the prefix pattern from SDFS
     System.out.println("Operation: list " + args.get(2));
     try {
-      List<String> fileList = OprationSDFS("list", args.get(2),"");
-      System.out.println("FileList:" + fileList);
+      List<String> fileList = OprationSDFS("list", args.get(2), "");
+      //System.out.println("FileList:" + fileList);
 
       arguments.add(args.get(0));
       arguments.add(args.get(1));
@@ -891,7 +902,7 @@ class MemListNode {
 
       // create a job priority queue
       queue = new PriorityQueue<job>();
-      CreateJobQ(arguments,4,arguments.size());
+      CreateJobQ(arguments, 4, arguments.size());
 
       // Initial JobDone List
       JobDone = new ArrayList<Boolean>();
@@ -900,12 +911,12 @@ class MemListNode {
     } catch (InterruptedException ex) {
       ex.printStackTrace();
     }
-    System.out.println("JobDone has "+JobDone.size()+" jobs.");
-    System.out.println("queue has "+queue.size()+" jobs.");
+    System.out.println("JobDone has " + JobDone.size() + " jobs.");
+    System.out.println("queue has " + queue.size() + " jobs.");
 
     GloPrefix = args.get(1);
 
-    jserver = new JuiceMaster(this,arguments,phase);
+    jserver = new JuiceMaster(this, arguments, phase);
     jserver.start();
   }
 
@@ -947,7 +958,8 @@ class MemListNode {
     try {
       BufferedWriter buf_writer = new BufferedWriter(new FileWriter(logname));
       for (int i = 0; i < jobs.size(); i++) {
-        System.out.println(jobs.get(i));
+        if (debug)
+          System.out.println(jobs.get(i));
         buf_writer.write(jobs.get(i));
         buf_writer.newLine();
       }
@@ -963,12 +975,12 @@ class MemListNode {
     }
   }
 
-  public void CreateJobQ (List< String > args,int start, int end){
+  public void CreateJobQ (List< String > args, int start, int end){
     //for (int i = 0; i < args.size(); i++)
     //    System.out.println("args.get("+i+") = "+args.get(i));
 
-    for (int i = start; i < end; i++){
-      System.out.println(args.get(i)+", id = "+(i-start));
+    for (int i = start; i < end; i++) {
+      LOGGER.info(args.get(i)+", id = "+(i-start));
       queue.add(new job(args.get(i),0,i-start));
     }
     phase_count = 0;
@@ -1137,7 +1149,7 @@ class MemListNode {
       boolean JuiceRun = false;
       try {
         ArrayList< String > fileList;
-        fileList = OprationSDFS("list",".JUICE_RUN","");
+        fileList = OprationSDFS("list", ".JUICE_RUN", "");
         if(fileList.size() > 0)
           JuiceRun = true;
       } catch (InterruptedException ex) {
@@ -1176,7 +1188,7 @@ class MemListNode {
             String exename = s.readLine();
             LinkedList<String> args = new LinkedList<String>();
             args.add(exename);
-            OprationSDFS("get", "MapleExe", exename);
+            OprationSDFS("get", "JuiceExe", exename);
             while ((str = s.readLine())!= null) {
               args.add(str);
             }
@@ -1324,11 +1336,13 @@ class MemListNode {
         return this;
       }
       public void run() {
-        LOGGER.info(
-          "Send request to " + memberToID(receiver) +
-          " with Target " + memberToID(msg.getTarget()) +
-          " and Action " + msg.getAction().name()
-          );
+        if (debug) {
+          LOGGER.info(
+            "Send request to " + memberToID(receiver) +
+            " with Target " + memberToID(msg.getTarget()) +
+            " and Action " + msg.getAction().name()
+            );
+        }
         try {
           Socket sock = new Socket(receiver.getIp(), receiver.getPort());
           OutputStream sock_out = sock.getOutputStream();

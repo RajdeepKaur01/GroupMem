@@ -54,7 +54,7 @@ class MapleWorker extends Thread {
         // get MapleExe
         //System.out.println("I am in the Maple Worker");
         System.out.println("Prefix is " + prefix + ", work is " + work);
-        currentNode.OprationSDFS("get","MapleExe","tf.class"); 
+        currentNode.OprationSDFS("get", "MapleExe", "tf.class"); 
         if (abort) {
           currentNode.sendAbortMessage();
           return;
@@ -192,17 +192,14 @@ class MapleWorker extends Thread {
       cmd_array.add(jobid);
       cmd_array.add(work);
       process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
-      while (abort == false){
-        try{
-          process.waitFor();
-          break;
-        } catch (InterruptedException e) {
-          if (abort == true){
-            // stop the process and return
-            process.destroy();
-            System.out.println("Process is destroyed.------");
-            throw new InterruptedException();
-          }
+      try{
+        process.waitFor();
+      } catch (InterruptedException e) {
+        if (abort == true) {
+          // stop the process and return
+          process.destroy();
+          System.out.println("Process is destroyed.------");
+          throw new InterruptedException();
         }
       }
     } catch(IOException ex) {

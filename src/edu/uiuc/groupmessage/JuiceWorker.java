@@ -51,8 +51,8 @@ class JuiceWorker extends Thread {
         }
         // get JuiceExe
         System.out.println("I am in the Juice Worker");
-        System.out.println("Prefix is "+prefix+", work is "+work);
-        currentNode.OprationSDFS("get","JuiceExe","tf_idf.class"); 
+        System.out.println("Prefix is " + prefix + ", work is " + work);
+        currentNode.OprationSDFS("get", "JuiceExe", "tf_idf.class"); 
         if (abort) {
           currentNode.sendAbortMessage();
           return;
@@ -97,33 +97,30 @@ class JuiceWorker extends Thread {
 
 
   public void runJuice() throws InterruptedException {
-    System.out.println("Operation :java tf_idf "+ work);
+    System.out.println("Operation :java tf_idf " + work);
     Runtime runtime = Runtime.getRuntime();
     Process process = null;
-    currentNode.OprationSDFS("get",work,work);  
+    currentNode.OprationSDFS("get", work, work);
     try {
       LinkedList< String > cmd_array = new LinkedList< String >();
       cmd_array.add("java");
       cmd_array.add("tf_idf");
       cmd_array.add(work);
       process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
-      while (abort == false){
-        try{
-          process.waitFor();
-          break;
-        } catch (InterruptedException e) {
-          if (abort == true){
-            // stop the process and return
-            process.destroy();
-            System.out.println("Process is destroyed.------");
-            throw new InterruptedException();
-          }
+      try{
+        process.waitFor();
+      } catch (InterruptedException e) {
+        if (abort == true){
+          // stop the process and return
+          process.destroy();
+          System.out.println("Process is destroyed.------");
+          throw new InterruptedException();
         }
       }
     } catch(IOException ex) {
       System.out.println("Unable to run juiceExe.\n");
     }
-    currentNode.OprationSDFS("put","tfidf_" + work, "tfidf_" + work);
+    currentNode.OprationSDFS("put", "tfidf_" + work, "tfidf_" + work);
     File tf_file = new File(work);
     tf_file.delete();      
   }
