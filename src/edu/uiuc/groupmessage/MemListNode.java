@@ -750,7 +750,7 @@ class MemListNode {
       LinkedList< String > cmd_array = new LinkedList< String >();
       cmd_array.add("java");
       cmd_array.add("-cp");
-      cmd_array.add("../GroupMem-mp3/bin:lib/protobuf-java-2.4.1.jar");
+      cmd_array.add("/home/ktseng2/code/GroupMem/bin:lib/protobuf-java-2.4.1.jar");
       cmd_array.add("edu.uiuc.groupmessage.SDFSClient");
       cmd_array.add(getMemberList().get(0).getIp());
       cmd_array.add("6611");
