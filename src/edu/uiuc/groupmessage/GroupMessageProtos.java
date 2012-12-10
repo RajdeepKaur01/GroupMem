@@ -547,6 +547,10 @@ public final class GroupMessageProtos {
     java.util.List<String> getFileList();
     int getFileCount();
     String getFile(int index);
+    
+    // optional string renamed_file_name = 7;
+    boolean hasRenamedFileName();
+    String getRenamedFileName();
   }
   public static final class GroupMessage extends
       com.google.protobuf.GeneratedMessage
@@ -599,6 +603,9 @@ public final class GroupMessageProtos {
       LIST_FILE_WITH_PREFIX(18, 18),
       PULL_FILE_WITH_PREFIX(19, 19),
       FILE_LIST(20, 20),
+      ERASE_FILE(21, 21),
+      RENAME_FILE_REQUEST(22, 22),
+      RENAME_FILE(23, 23),
       ;
       
       public static final int JOIN_REQUEST_VALUE = 0;
@@ -622,6 +629,9 @@ public final class GroupMessageProtos {
       public static final int LIST_FILE_WITH_PREFIX_VALUE = 18;
       public static final int PULL_FILE_WITH_PREFIX_VALUE = 19;
       public static final int FILE_LIST_VALUE = 20;
+      public static final int ERASE_FILE_VALUE = 21;
+      public static final int RENAME_FILE_REQUEST_VALUE = 22;
+      public static final int RENAME_FILE_VALUE = 23;
       
       
       public final int getNumber() { return value; }
@@ -649,6 +659,9 @@ public final class GroupMessageProtos {
           case 18: return LIST_FILE_WITH_PREFIX;
           case 19: return PULL_FILE_WITH_PREFIX;
           case 20: return FILE_LIST;
+          case 21: return ERASE_FILE;
+          case 22: return RENAME_FILE_REQUEST;
+          case 23: return RENAME_FILE;
           default: return null;
         }
       }
@@ -679,7 +692,7 @@ public final class GroupMessageProtos {
       }
       
       private static final Action[] VALUES = {
-        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, GET_FILE_LOCATION, FILE_LOCATION, PUT_FILE, GET_FILE, DELETE_FILE, DELETE_REPLICA, FILE_OK, FILE_ERROR, PUSH_FILE, FILE_NOT_EXIST, FILE_EXIST, CHECK_FILE_EXIST, LIST_FILE_WITH_PREFIX, PULL_FILE_WITH_PREFIX, FILE_LIST, 
+        JOIN_REQUEST, RESET_MEMBERLIST, TARGET_JOINS, TARGET_LEAVES, TARGET_FAILS, TARGET_HEARTBEATS, GET_FILE_LOCATION, FILE_LOCATION, PUT_FILE, GET_FILE, DELETE_FILE, DELETE_REPLICA, FILE_OK, FILE_ERROR, PUSH_FILE, FILE_NOT_EXIST, FILE_EXIST, CHECK_FILE_EXIST, LIST_FILE_WITH_PREFIX, PULL_FILE_WITH_PREFIX, FILE_LIST, ERASE_FILE, RENAME_FILE_REQUEST, RENAME_FILE, 
       };
       
       public static Action valueOf(
@@ -803,6 +816,38 @@ public final class GroupMessageProtos {
       return file_.get(index);
     }
     
+    // optional string renamed_file_name = 7;
+    public static final int RENAMED_FILE_NAME_FIELD_NUMBER = 7;
+    private java.lang.Object renamedFileName_;
+    public boolean hasRenamedFileName() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
+    }
+    public String getRenamedFileName() {
+      java.lang.Object ref = renamedFileName_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+          renamedFileName_ = s;
+        }
+        return s;
+      }
+    }
+    private com.google.protobuf.ByteString getRenamedFileNameBytes() {
+      java.lang.Object ref = renamedFileName_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+        renamedFileName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    
     private void initFields() {
       target_ = edu.uiuc.groupmessage.GroupMessageProtos.Member.getDefaultInstance();
       action_ = edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage.Action.TARGET_HEARTBEATS;
@@ -810,6 +855,7 @@ public final class GroupMessageProtos {
       fileContent_ = com.google.protobuf.ByteString.EMPTY;
       fileName_ = "";
       file_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      renamedFileName_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -859,6 +905,9 @@ public final class GroupMessageProtos {
       for (int i = 0; i < file_.size(); i++) {
         output.writeBytes(6, file_.getByteString(i));
       }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeBytes(7, getRenamedFileNameBytes());
+      }
       getUnknownFields().writeTo(output);
     }
     
@@ -896,6 +945,10 @@ public final class GroupMessageProtos {
         }
         size += dataSize;
         size += 1 * getFileList().size();
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(7, getRenamedFileNameBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1043,6 +1096,8 @@ public final class GroupMessageProtos {
         bitField0_ = (bitField0_ & ~0x00000010);
         file_ = com.google.protobuf.LazyStringArrayList.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000020);
+        renamedFileName_ = "";
+        bitField0_ = (bitField0_ & ~0x00000040);
         return this;
       }
       
@@ -1116,6 +1171,10 @@ public final class GroupMessageProtos {
           bitField0_ = (bitField0_ & ~0x00000020);
         }
         result.file_ = file_;
+        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+          to_bitField0_ |= 0x00000010;
+        }
+        result.renamedFileName_ = renamedFileName_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1179,6 +1238,9 @@ public final class GroupMessageProtos {
             file_.addAll(other.file_);
           }
           onChanged();
+        }
+        if (other.hasRenamedFileName()) {
+          setRenamedFileName(other.getRenamedFileName());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1268,6 +1330,11 @@ public final class GroupMessageProtos {
             case 50: {
               ensureFileIsMutable();
               file_.add(input.readBytes());
+              break;
+            }
+            case 58: {
+              bitField0_ |= 0x00000040;
+              renamedFileName_ = input.readBytes();
               break;
             }
           }
@@ -1692,6 +1759,42 @@ public final class GroupMessageProtos {
         onChanged();
       }
       
+      // optional string renamed_file_name = 7;
+      private java.lang.Object renamedFileName_ = "";
+      public boolean hasRenamedFileName() {
+        return ((bitField0_ & 0x00000040) == 0x00000040);
+      }
+      public String getRenamedFileName() {
+        java.lang.Object ref = renamedFileName_;
+        if (!(ref instanceof String)) {
+          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+          renamedFileName_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
+      }
+      public Builder setRenamedFileName(String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000040;
+        renamedFileName_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearRenamedFileName() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        renamedFileName_ = getDefaultInstance().getRenamedFileName();
+        onChanged();
+        return this;
+      }
+      void setRenamedFileName(com.google.protobuf.ByteString value) {
+        bitField0_ |= 0x00000040;
+        renamedFileName_ = value;
+        onChanged();
+      }
+      
       // @@protoc_insertion_point(builder_scope:GroupMessage)
     }
     
@@ -1723,23 +1826,25 @@ public final class GroupMessageProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\023group_message.proto\"5\n\006Member\022\n\n\002ip\030\001 " +
-      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\307\004\n" +
+      "\002(\t\022\014\n\004port\030\002 \002(\005\022\021\n\ttimestamp\030\003 \001(\005\"\234\005\n" +
       "\014GroupMessage\022\027\n\006target\030\001 \002(\0132\007.Member\0227" +
       "\n\006action\030\002 \002(\0162\024.GroupMessage.Action:\021TA" +
       "RGET_HEARTBEATS\022\027\n\006member\030\003 \003(\0132\007.Member" +
       "\022\024\n\014file_content\030\004 \001(\014\022\021\n\tfile_name\030\005 \001(" +
-      "\t\022\014\n\004file\030\006 \003(\t\"\224\003\n\006Action\022\020\n\014JOIN_REQUE" +
-      "ST\020\000\022\024\n\020RESET_MEMBERLIST\020\001\022\020\n\014TARGET_JOI" +
-      "NS\020\002\022\021\n\rTARGET_LEAVES\020\003\022\020\n\014TARGET_FAILS\020" +
-      "\004\022\025\n\021TARGET_HEARTBEATS\020\005\022\025\n\021GET_FILE_LOC",
-      "ATION\020\006\022\021\n\rFILE_LOCATION\020\007\022\014\n\010PUT_FILE\020\010" +
-      "\022\014\n\010GET_FILE\020\t\022\017\n\013DELETE_FILE\020\n\022\022\n\016DELET" +
-      "E_REPLICA\020\013\022\013\n\007FILE_OK\020\014\022\016\n\nFILE_ERROR\020\r" +
-      "\022\r\n\tPUSH_FILE\020\016\022\022\n\016FILE_NOT_EXIST\020\017\022\016\n\nF" +
-      "ILE_EXIST\020\020\022\024\n\020CHECK_FILE_EXIST\020\021\022\031\n\025LIS" +
-      "T_FILE_WITH_PREFIX\020\022\022\031\n\025PULL_FILE_WITH_P" +
-      "REFIX\020\023\022\r\n\tFILE_LIST\020\024B+\n\025edu.uiuc.group" +
-      "messageB\022GroupMessageProtos"
+      "\t\022\014\n\004file\030\006 \003(\t\022\031\n\021renamed_file_name\030\007 \001" +
+      "(\t\"\316\003\n\006Action\022\020\n\014JOIN_REQUEST\020\000\022\024\n\020RESET" +
+      "_MEMBERLIST\020\001\022\020\n\014TARGET_JOINS\020\002\022\021\n\rTARGE" +
+      "T_LEAVES\020\003\022\020\n\014TARGET_FAILS\020\004\022\025\n\021TARGET_H",
+      "EARTBEATS\020\005\022\025\n\021GET_FILE_LOCATION\020\006\022\021\n\rFI" +
+      "LE_LOCATION\020\007\022\014\n\010PUT_FILE\020\010\022\014\n\010GET_FILE\020" +
+      "\t\022\017\n\013DELETE_FILE\020\n\022\022\n\016DELETE_REPLICA\020\013\022\013" +
+      "\n\007FILE_OK\020\014\022\016\n\nFILE_ERROR\020\r\022\r\n\tPUSH_FILE" +
+      "\020\016\022\022\n\016FILE_NOT_EXIST\020\017\022\016\n\nFILE_EXIST\020\020\022\024" +
+      "\n\020CHECK_FILE_EXIST\020\021\022\031\n\025LIST_FILE_WITH_P" +
+      "REFIX\020\022\022\031\n\025PULL_FILE_WITH_PREFIX\020\023\022\r\n\tFI" +
+      "LE_LIST\020\024\022\016\n\nERASE_FILE\020\025\022\027\n\023RENAME_FILE" +
+      "_REQUEST\020\026\022\017\n\013RENAME_FILE\020\027B+\n\025edu.uiuc." +
+      "groupmessageB\022GroupMessageProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -1759,7 +1864,7 @@ public final class GroupMessageProtos {
           internal_static_GroupMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_GroupMessage_descriptor,
-              new java.lang.String[] { "Target", "Action", "Member", "FileContent", "FileName", "File", },
+              new java.lang.String[] { "Target", "Action", "Member", "FileContent", "FileName", "File", "RenamedFileName", },
               edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage.class,
               edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage.Builder.class);
           return null;

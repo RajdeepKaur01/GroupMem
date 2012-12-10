@@ -75,6 +75,76 @@ class SDFSClient extends Thread {
     }
   }
 
+  public void eraseFile(String sdfs_name) {
+    GroupMessage send_msg, rcv_msg;
+    if (sdfs_name == null) {
+      return;
+    }
+
+    // Prepare for the ERASE_FILE message
+    System.out.println("Erasing file with prefix " + sdfs_name);
+    send_msg = GroupMessage.newBuilder()
+      .setTarget(master)
+      .setAction(GroupMessage.Action.ERASE_FILE)
+      .setFileName(sdfs_name)
+      .build();
+
+    // send the erase message
+    rcv_msg = sendMessage(master, send_msg);
+
+    // check the response
+    switch (rcv_msg.getAction()) {
+    case FILE_OK:
+      System.out.println("Successfully erased the file " + sdfs_name);
+      break;
+    case FILE_ERROR:
+      System.out.println("Error erasing the file " + sdfs_name);
+      break;
+    case FILE_NOT_EXIST:
+      System.out.println("Error - File does not exist " + sdfs_name);
+      break;
+    case FILE_LOCATION:
+    default:
+      System.out.println("Received Unknown action " + rcv_msg.getAction().name());
+      break;
+    }
+  }
+
+  public void renameFile(String prefix) {
+    GroupMessage send_msg, rcv_msg;
+    if (prefix == null) {
+      return;
+    }
+
+    // Prepare for the ERASE_FILE message
+    System.out.println("Rename file with prefix " + prefix);
+    send_msg = GroupMessage.newBuilder()
+      .setTarget(master)
+      .setAction(GroupMessage.Action.RENAME_FILE_REQUEST)
+      .setFileName(prefix)
+      .build();
+
+    // send the erase message
+    rcv_msg = sendMessage(master, send_msg);
+
+    // check the response
+    switch (rcv_msg.getAction()) {
+    case FILE_OK:
+      System.out.println("Successfully erased the file " + prefix);
+      break;
+    case FILE_ERROR:
+      System.out.println("Error erasing the file " + prefix);
+      break;
+    case FILE_NOT_EXIST:
+      System.out.println("Error - File does not exist " + prefix);
+      break;
+    case FILE_LOCATION:
+    default:
+      System.out.println("Received Unknown action " + rcv_msg.getAction().name());
+      break;
+    }
+  }
+
   public void listFileWithPrefix(String prefix) {
     
     if (prefix == null) {
@@ -194,7 +264,6 @@ class SDFSClient extends Thread {
     }
   }
 
-
   class SDFSClientWorker extends Thread {
     private Member target;
     private GroupMessage send_msg;
@@ -246,6 +315,10 @@ class SDFSClient extends Thread {
       getFile(tokens[1], tokens[2]);
     } else if (tokens[0].equals("delete") && tokens.length == 2) {
       deleteFile(tokens[1]);
+    } else if (tokens[0].equals("erase") && tokens.length == 2) {
+      eraseFile(tokens[1]);
+    } else if (tokens[0].equals("rename") && tokens.length == 2) {
+      renameFile(tokens[1]);
     } else if (tokens[0].equals("list") && tokens.length == 2) {
       listFileWithPrefix(tokens[1]);
     } else {

@@ -2,6 +2,7 @@ package edu.uiuc.groupmessage;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,7 +29,6 @@ import java.util.logging.SimpleFormatter;
 
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 import edu.uiuc.groupmessage.GroupMessageProtos.Member;
-
 
 class MemListNode {
   private Member currentMember;
@@ -135,6 +135,12 @@ class MemListNode {
     case PUSH_FILE:
       //handlePushFile(msg.getFileName(), msg.getFileContent());
       break;
+    case ERASE_FILE:
+      return handleEraseFile(msg.getFileName());
+    case RENAME_FILE_REQUEST:
+      return handleRenameFileRequest(msg.getFileName());
+    case RENAME_FILE:
+      return handleRenameFile(msg.getFileName());
     case DELETE_FILE:
       return handleDeleteFile(msg.getFileName());
     case DELETE_REPLICA:
@@ -265,6 +271,83 @@ class MemListNode {
       System.out.println(ex.getMessage());
     }
     LOGGER.info("Deleted replica of file " + file_name + " successfully");
+  }
+
+  public GroupMessage handleEraseFile(final String prefix) {
+    File folder = new File(dirPath);
+    File[] files = folder.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        int count = 0;
+        for (int i = 0; i < name.length(); i++) {
+          if (name.charAt(i) == '_') {
+            count++;
+          }
+        }
+        if (count >= 2 && name.startsWith(prefix)) {
+          return true;
+        } else {
+          return false;
+        }
+      }   
+    });
+
+    for (File file : files) {
+      file.delete();
+    }
+
+    if (currentMember.getIp().equals(portalMember.getIp()) && currentMember.getPort() == portalMember.getPort()) {
+      System.out.println("Broadcast the ERASE_FILE message");
+      GroupMessage msg = GroupMessage.newBuilder()
+        .setTarget(currentMember)
+        .setAction(GroupMessage.Action.ERASE_FILE)
+        .setFileName(prefix)
+        .build();
+      for (Member member : memberList) {
+        if (!member.equals(currentMember)) {
+          sendMessageWaitResponse(member, msg);
+        }
+      }
+    }
+
+    return GroupMessage.newBuilder()
+      .setTarget(currentMember)
+      .setAction(GroupMessage.Action.FILE_OK)
+      .build();
+  }
+
+  public GroupMessage handleRenameFile(final String prefix) {
+    File folder = new File(dirPath);
+    File[] files = folder.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) { 
+        return name.startsWith(prefix);
+      }   
+    });
+
+    // TODO
+
+    return GroupMessage.newBuilder()
+      .setTarget(currentMember)
+      .setAction(GroupMessage.Action.FILE_OK)
+      .build();
+  }
+
+  public GroupMessage handleRenameFileRequest(final String prefix) {
+    System.out.println("Broadcast the RENAME_FILE message");
+    GroupMessage msg = GroupMessage.newBuilder()
+      .setTarget(currentMember)
+      .setAction(GroupMessage.Action.RENAME_FILE)
+      .setFileName(prefix)
+      .build();
+    for (Member member : memberList) {
+      sendMessageWaitResponse(member, msg);
+    }
+
+    return GroupMessage.newBuilder()
+      .setTarget(currentMember)
+      .setAction(GroupMessage.Action.FILE_OK)
+      .build();
   }
 
   public GroupMessage handleDeleteFile(String file_name) {
