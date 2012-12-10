@@ -44,7 +44,7 @@ class MapleWorker extends Thread {
       done = false;
       String mark_done = phase1doneprefix + "done_" + (new File(work)).getName();
       // first check if the job is aleady done by someone else before master failed
-      LinkedList<String> returnlist = currentNode.OprationSDFS("list", mark_done, "");
+      ArrayList<String> returnlist = currentNode.OprationSDFS("list", mark_done, "");
       if (returnlist.size() == 0) {// not done
 
         if (abort) {
@@ -52,7 +52,7 @@ class MapleWorker extends Thread {
           return;
         }
         // get MapleExe
-        System.out.println("I am in the Maple Worker");
+        //System.out.println("I am in the Maple Worker");
         System.out.println("Prefix is " + prefix + ", work is " + work);
         currentNode.OprationSDFS("get","MapleExe","tf.class"); 
         if (abort) {
@@ -121,7 +121,7 @@ class MapleWorker extends Thread {
     // Generate the tar ball _tarball_name_.tgz
     Runtime runtime = Runtime.getRuntime(); 
     String tar_name = "_tarball_" + (new File(work)).getName() + ".tgz";
-    System.out.println("Generating the tar ball file " + tar_name);
+    //System.out.println("Generating the tar ball file " + tar_name);
     try {
       ArrayList< String > cmd_array = new ArrayList< String >();
       cmd_array.add("tar");
@@ -133,7 +133,7 @@ class MapleWorker extends Thread {
     } catch (IOException ex) {
       ex.printStackTrace();
     }
-    System.out.println("Finished generating the tar ball file " + tar_name);
+    //System.out.println("Finished generating the tar ball file " + tar_name);
 
     // Put the tarball file into SDFS
     currentNode.OprationSDFS("put", tar_name, tar_name);
@@ -144,7 +144,7 @@ class MapleWorker extends Thread {
         System.out.println("Delete " + file.getName() + " is failed.!!!!!!!!!!!!!!!!!");
         
     // Delete all the files with the prefix
-    System.out.println("Delete all files with prefix " + prefix);
+    //System.out.println("Delete all files with prefix " + prefix);
     try {
       ArrayList< String > cmd_array = new ArrayList< String >();
       cmd_array.add("rm");
@@ -155,7 +155,7 @@ class MapleWorker extends Thread {
     } catch (IOException ex) {
       ex.printStackTrace();
     }
-    System.out.println("Finished deleting all files with prefix " + prefix);
+    //System.out.println("Finished deleting all files with prefix " + prefix);
 
     /*File folder = new File(pathname);
     File [] files = folder.listFiles(new FilenameFilter() {

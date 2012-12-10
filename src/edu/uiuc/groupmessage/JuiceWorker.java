@@ -1,5 +1,6 @@
 package edu.uiuc.groupmessage;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.io.IOException;
 
@@ -41,7 +42,7 @@ class JuiceWorker extends Thread {
       done = false;
       String mark_done = phase1doneprefix+ work;
       // first check if the job is aleady done by someone else before master failed
-      LinkedList<String> returnlist = currentNode.OprationSDFS("list",mark_done,"");
+      ArrayList<String> returnlist = currentNode.OprationSDFS("list",mark_done,"");
       if (returnlist.size() == 0){// not done
 
         if (abort) {

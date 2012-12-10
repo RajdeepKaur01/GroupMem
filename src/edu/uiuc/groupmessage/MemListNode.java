@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
@@ -58,6 +59,7 @@ class MemListNode {
   private JuiceF2Worker jf2worker;
   private long mapleTimestamp;
   private long juiceTimestamp;
+  private int phase_count;
 
   private Timer heartbeatClientTimer;
   private Timer detectorTimer;
@@ -257,14 +259,14 @@ class MemListNode {
     try {
       System.out.println("------------ALL NODE ABORTED---------------");
       // Check and just return if this is a Juice Job
-      List<String> fileList = OprationSDFS("list",".JUICE_RUN","");
+      List<String> fileList = OprationSDFS("list", ".JUICE_RUN", "");
       if(fileList.size() > 0)
         return;
       // Nothing to be done in handling new phase for Juice 
 
       // check phase from SDFS
       int state = 0;
-      LinkedList<String> returnlist = new LinkedList<String>();
+      ArrayList<String> returnlist;
       for (int i = 0; i <= 2; i++){
         returnlist = OprationSDFS("list",StateLog+i,"");
         if (returnlist.size() != 0){
@@ -306,16 +308,19 @@ class MemListNode {
         System.out.println("prefix is "+prefix);
 
         // get job list
-        LinkedList<String> f2job = OprationSDFS("list", prefix, "");        
-        trimKey(f2job);
-        RemoveDuplicate(f2job);
+        ArrayList<String> f2job = OprationSDFS("list", prefix, "");        
 
         queue = new PriorityQueue<job>();
         Jobf2Done = new ArrayList<Boolean>();
-        for (int i = 0; i < f2job.size(); i++){
-          System.out.println(f2job.get(i)+", id = "+i);
-          queue.add(new job(f2job.get(i),0,i));
-          Jobf2Done.add(false);
+        HashMap<String, Boolean> keymap = new HashMap<String, Boolean>();
+        int count = 0;
+        for (int i = 0; i < f2job.size(); i++) {
+          String key = trimKey(f2job.get(i));
+          if (!keymap.containsKey(key)) {
+            keymap.put(key, true);
+            queue.add(new job(key, 0, count++));
+            Jobf2Done.add(false);
+          }
         }
         System.out.println("Jobf2Done has "+Jobf2Done.size()+" jobs.");
         System.out.println("queue has "+queue.size()+" jobs.");
@@ -338,7 +343,7 @@ class MemListNode {
         if (memberListForAbort.get(i).equals(member)){
           memberListForAbort.remove(i);
           System.out.println("memberListForAbort.size() = "+memberListForAbort.size());
-          if (memberListForAbort.size() == 0){
+          if (memberListForAbort.size() == 0) {
             GroupMessage msg = GroupMessage.newBuilder()
               .setTarget(currentMember)
               .setAction(GroupMessage.Action.ALL_ABORT)
@@ -353,9 +358,12 @@ class MemListNode {
 
   public void handleMapleComplete(String prefix){
     try {
-      memberListForAbort = new LinkedList<Member>();
-      for (int i = 0; i < memberList.size(); i++)
-        memberListForAbort.add(memberList.get(i));
+        LOGGER.warning("Maple all Complete, Start aborting every worker");
+        memberListForAbort = new LinkedList<Member>();
+        synchronized(memberListForAbort) {
+          for (int i = 0; i < memberList.size(); i++)
+            memberListForAbort.add(memberList.get(i));
+        }
       abortEveryWorker(phase);
 
       // reset maple to ready state
@@ -365,24 +373,7 @@ class MemListNode {
       // remove all intermediate files
       OprationSDFS("erase", prefix, "");
       OprationSDFS("erase", "_tarball_", "");
-
-      // then renaming those phase2_prefix_key as prefix_key
-//      LinkedList<String> keyset = OprationSDFS("list","phase2_","");
-//      for (int i = 0; i < keyset.size(); i++){
-//        OprationSDFS("get",keyset.get(i),keyset.get(i));
-//        File oldfile =new File(keyset.get(i));
-//        String newfilename = ResetName(keyset.get(i));/////////
-//        File newfile =new File(newfilename);
-//
-//        if(oldfile.renameTo(newfile)){
-//          System.out.println("Rename "+keyset.get(i)+" succesful");
-//        }else{
-//          System.out.println("Rename "+keyset.get(i)+" failed");
-//        }
-//        OprationSDFS("put",newfilename,newfilename);
-//        OprationSDFS("delete",keyset.get(i),"");
-//        deletefile(newfilename);
-//      }
+      OprationSDFS("erase", "done", "");
 
       LOGGER.warning("Maple Execution Time: " + (System.currentTimeMillis() - mapleTimestamp));
       System.out.println("-------Maple is Completely Done-----------");
@@ -476,21 +467,27 @@ class MemListNode {
   public void handleMaplePhaseTwo(List< String > args){
 
     // request to abort current phase 1 jobs
+    LOGGER.warning("Maple Phase 1 Complete, Start aborting every worker");
     memberListForAbort = new LinkedList<Member>();
-    for (int i = 0; i < memberList.size(); i++)
-      memberListForAbort.add(memberList.get(i));
+    synchronized(memberListForAbort) {
+      for (int i = 0; i < memberList.size(); i++)
+        memberListForAbort.add(memberList.get(i));
+    }
     abortEveryWorker(phase);
 
     // change phase
     phase = 2;
+    phase_count = 0;
     createStateLogAndPut(StateLog,phase);
   }
 
   public void handleJuicePhaseTwo(List< String > args){
     // request to abort current phase 1 jobs
     memberListForAbort = new LinkedList<Member>();
-    for (int i = 0; i < memberList.size(); i++)
-      memberListForAbort.add(memberList.get(i));
+    synchronized(memberListForAbort) {
+      for (int i = 0; i < memberList.size(); i++)
+        memberListForAbort.add(memberList.get(i));
+    }
     abortEveryJuiceWorker(phase);
 
     // change phase
@@ -608,6 +605,8 @@ class MemListNode {
       TopJob = getQ().remove();
       TopJob.settime(System.currentTimeMillis());
       getQ().add(TopJob);
+
+      System.out.println("Current queue size:" + getQ().size());
       return TopJob;
     }
   }
@@ -644,17 +643,13 @@ class MemListNode {
     }
   }
 
-  public void trimKey(LinkedList<String> joblist){
-    String delims = "_";
-    for( int j = 0; j < joblist.size(); j++){
-      String[] tokens = joblist.get(j).split(delims);
-      String str = tokens[0] +"_"+ tokens[1];
-      joblist.set(j,str);
-      //System.out.println(joblist.get(j));
-    }
+  public String trimKey(String str){
+    String delims = "_|\\.";
+    String[] tokens = str.split(delims);
+    return tokens[0] + "_" + tokens[1];
   }
 
-  public void RemoveDuplicate(LinkedList<String> keylist){
+  public void RemoveDuplicate(ArrayList<String> keylist){
     for (int i = 0; i < keylist.size(); i++)
       for (int j = i+1; j < keylist.size(); j++)
         if ((keylist.get(i)).equals(keylist.get(j))){
@@ -664,9 +659,9 @@ class MemListNode {
   }
 
   public void handleMapleWorkDone(Member sender, List< String > args){
-
     // mark the work in JobDone as true
-    System.out.println(args.get(0)+" is done, its id is "+ args.get(1));
+    phase_count++;
+    System.out.println(args.get(0)+" is done, its id is "+ args.get(1) + "phase count = " + phase_count);
     if (phase == 1)
       JobDone.set(Integer.parseInt(args.get(1)),true);
     else if (phase == 2)
@@ -735,10 +730,10 @@ class MemListNode {
     sendMessageTo(msg,member);
   }
 
-  public LinkedList<String> OprationSDFS(String op,String str1, String str2) throws InterruptedException
+  public ArrayList<String> OprationSDFS(String op,String str1, String str2) throws InterruptedException
   {
     System.out.println("Operation: "+op+" "+str1+" "+str2);
-    LinkedList<String> returnlist = new LinkedList<String>();
+    ArrayList<String> returnlist = new ArrayList<String>();
     Runtime runtime = Runtime.getRuntime();
     Process process = null;
     try {
@@ -755,14 +750,12 @@ class MemListNode {
         cmd_array.add(str2);
       process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
 
-      System.out.println("Starting reading file list");
       BufferedReader result = new BufferedReader(new InputStreamReader(process.getInputStream()));
       String line;
       while((line = result.readLine()) != null) {
         returnlist.add(line);
       }            
       result.close();
-      System.out.println("Finished reading file list");
 
       try{
         process.waitFor();
@@ -978,6 +971,7 @@ class MemListNode {
       System.out.println(args.get(i)+", id = "+(i-start));
       queue.add(new job(args.get(i),0,i-start));
     }
+    phase_count = 0;
   }
 
   public void sendMapleRequestTo(LinkedList< String > arg) {
@@ -1124,13 +1118,13 @@ class MemListNode {
     {
       System.out.println("-----------I am the new Master--------------");
       // read state
-      LinkedList<String> returnlist = null;
+      ArrayList<String> returnlist = null;
       int state = 0;
       try {
-        for (int i = 0; i <= 2; i++){
-          returnlist = OprationSDFS("list",StateLog+i,"");
-          if (returnlist.size() != 0){
-            System.out.println("Get "+StateLog+i);
+        for (int i = 0; i <= 2; i++) {
+          returnlist = OprationSDFS("list", StateLog + i, "");
+          if (returnlist.size() != 0) {
+            System.out.println("Get " + StateLog + i);
             state = i;
             break;
           }
@@ -1142,7 +1136,7 @@ class MemListNode {
       // Check if this is JUICE run, handle Juice here
       boolean JuiceRun = false;
       try {
-        LinkedList< String > fileList = new LinkedList< String >();
+        ArrayList< String > fileList;
         fileList = OprationSDFS("list",".JUICE_RUN","");
         if(fileList.size() > 0)
           JuiceRun = true;
@@ -1152,8 +1146,10 @@ class MemListNode {
 
       // first stop every one
       memberListForAbort = new LinkedList<Member>();
-      for (int i = 0; i < memberList.size(); i++)
-        memberListForAbort.add(memberList.get(i));
+      synchronized(memberListForAbort) {
+        for (int i = 0; i < memberList.size(); i++)
+          memberListForAbort.add(memberList.get(i));
+      }
       if(JuiceRun == true)
         abortEveryJuiceWorker(state);
       else
@@ -1164,7 +1160,7 @@ class MemListNode {
         if(state == 1)
         {
           try {
-            OprationSDFS("get",JobLog,JobLog);
+            OprationSDFS("get", JobLog, JobLog);
           } catch (InterruptedException ex) {
             ex.printStackTrace();
           }
@@ -1180,8 +1176,8 @@ class MemListNode {
             String exename = s.readLine();
             LinkedList<String> args = new LinkedList<String>();
             args.add(exename);
-            OprationSDFS("get","MapleExe",exename);
-            while ((str = s.readLine())!= null){
+            OprationSDFS("get", "MapleExe", exename);
+            while ((str = s.readLine())!= null) {
               args.add(str);
             }
             sendJuiceRequestTo(args);

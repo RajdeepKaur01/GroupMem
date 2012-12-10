@@ -76,7 +76,7 @@ public class tf
   static void ToFile(String prefix, String job_id, int wordtotal, HashMap<String, Integer> keyMap,String doc) throws IOException {
     Set<String> keys = keyMap.keySet();
     for(String key : keys) {
-      String filename = prefix + "_" + key + "_" + job_id;
+      String filename = prefix + "_" + key + "." + job_id;
       int wordc = (Integer) keyMap.get(key);
       FileWriter buf_writer = new FileWriter(filename);
       buf_writer.write(Double.toString((double)wordc/(double)wordtotal)+"\t" + doc + "\n");

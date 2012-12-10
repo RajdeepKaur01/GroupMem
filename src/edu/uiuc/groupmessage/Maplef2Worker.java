@@ -7,7 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 
@@ -27,7 +27,7 @@ class Maplef2Worker  extends Thread {
     abort = false;
     done = false;
   }
-  public void abort(){
+  public void abort() {
     abort = true;
     System.out.println("-------I am here to abort------------");
     if (done == true){
@@ -46,9 +46,9 @@ class Maplef2Worker  extends Thread {
         return;
       }
       // check if the work is done before master fail
-      String filename = "done_"+work;
+      String filename = "done_" + work;
       // first check if the job is aleady done by someone else before master failed
-      LinkedList<String> returnlist = currentNode.OprationSDFS("list",filename,"");
+      ArrayList<String> returnlist = currentNode.OprationSDFS("list", filename, "");
       if (returnlist.size() == 0) {    // not done
 
         System.out.println("I am in the Maple Phase 2 Worker.");
@@ -59,9 +59,8 @@ class Maplef2Worker  extends Thread {
           return;
         }
 
-        LinkedList<String> workfiles = currentNode.OprationSDFS("list", work, "");
+        ArrayList<String> workfiles = currentNode.OprationSDFS("list", work, "");
         try{
-          //RandomAccessFile raf = new RandomAccessFile(work, "rws");
           BufferedWriter buf_writer = new BufferedWriter(new FileWriter(work));
           for (int i = 0; i < workfiles.size(); i++) {
             if (abort) {
@@ -71,13 +70,17 @@ class Maplef2Worker  extends Thread {
             }
 
             currentNode.OprationSDFS("get", workfiles.get(i), workfiles.get(i));
+            File file = new File(workfiles.get(i));
+            if (!file.exists()) {
+              System.out.println(workfiles.get(i) + " does not exist");
+              continue;
+            }
             BufferedReader s = new BufferedReader(new FileReader(workfiles.get(i)));
-            //raf.seek(raf.length());
-            String str = s.readLine();
-            buf_writer.write(str);
-            buf_writer.newLine();
-            //raf.writeBytes(str);
-            //raf.writeBytes("\n");
+            String str;
+            while((str = s.readLine()) != null) {
+              buf_writer.write(str);
+              buf_writer.newLine();
+            }
 
             // then delete this file locally
             currentNode.deletefile(workfiles.get(i));
@@ -86,10 +89,9 @@ class Maplef2Worker  extends Thread {
             // it might be done by other worker
             s.close();
           }
-          //raf.close();
           buf_writer.close();
-        } catch (NullPointerException ex) {
-          throw new InterruptedException();
+//        } catch (NullPointerException ex) {
+//          throw new InterruptedException();
         } catch (FileNotFoundException e) {
           e.printStackTrace();
         } catch (IOException e) {

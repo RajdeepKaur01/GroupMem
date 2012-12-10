@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class JuiceF2Worker extends Thread  {
@@ -18,7 +19,7 @@ public class JuiceF2Worker extends Thread  {
   public void run() {
     try {
       // Merge all key files in SDFS
-      LinkedList< String > fileList = new LinkedList< String >();
+      ArrayList< String > fileList;
       fileList = currentNode.OprationSDFS("list","tfidf","");
 
       System.out.println(fileList);
@@ -80,6 +81,7 @@ public class JuiceF2Worker extends Thread  {
 
       currentNode.OprationSDFS("put",DestFile.getName(),DestFile.getName());
       DestFile.delete();
+      currentNode.OprationSDFS("erase", "tfidf", "");
       // change phase to ready state
       currentNode.phase = 0;
       currentNode.createStateLogAndPut(currentNode.StateLog,currentNode.phase);
