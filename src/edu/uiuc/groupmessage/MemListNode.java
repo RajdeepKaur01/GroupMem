@@ -372,11 +372,11 @@ class MemListNode {
           for (int i = 0; i < memberList.size(); i++)
             memberListForAbort.add(memberList.get(i));
         }
-      abortEveryWorker(phase);
 
       // reset maple to ready state
+      createStateLogAndPut(StateLog, 0);
+      abortEveryWorker(phase);
       phase = 0;
-      createStateLogAndPut(StateLog,phase);
 
       // remove all intermediate files
       OprationSDFS("erase", prefix, "");
@@ -481,12 +481,12 @@ class MemListNode {
       for (int i = 0; i < memberList.size(); i++)
         memberListForAbort.add(memberList.get(i));
     }
-    abortEveryWorker(phase);
 
     // change phase
-    phase = 2;
     phase_count = 0;
-    createStateLogAndPut(StateLog,phase);
+    createStateLogAndPut(StateLog, 2);
+    abortEveryWorker(phase);
+    phase = 2;
   }
 
   public void handleJuicePhaseTwo(List< String > args){
@@ -496,12 +496,13 @@ class MemListNode {
       for (int i = 0; i < memberList.size(); i++)
         memberListForAbort.add(memberList.get(i));
     }
-    abortEveryJuiceWorker(phase);
 
     // change phase
+    createStateLogAndPut(StateLog, 2);
     phase = 2;
-    createStateLogAndPut(StateLog,phase);
     sendJuiceF2RequestTo();
+
+    abortEveryJuiceWorker(phase);
   }
 
   public void DistributeJuiceJobs(String prefix,int phase){
@@ -749,7 +750,7 @@ class MemListNode {
       LinkedList< String > cmd_array = new LinkedList< String >();
       cmd_array.add("java");
       cmd_array.add("-cp");
-      cmd_array.add("/home/ktseng2/code/GroupMem/bin:lib/protobuf-java-2.4.1.jar");
+      cmd_array.add("../GroupMem-mp3/bin:lib/protobuf-java-2.4.1.jar");
       cmd_array.add("edu.uiuc.groupmessage.SDFSClient");
       cmd_array.add(getMemberList().get(0).getIp());
       cmd_array.add("6611");
@@ -920,7 +921,7 @@ class MemListNode {
     jserver.start();
   }
 
-  public void createStateLogAndPut(String logname,int state){
+  public void createStateLogAndPut(String logname, int state){
     try {
       String filename = logname;
       int prevState = state-1;

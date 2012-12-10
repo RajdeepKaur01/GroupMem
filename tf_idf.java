@@ -41,7 +41,7 @@ public class tf_idf {
       String[] splitline = line.split("\t");
       String Doc = splitline[1];
       double tf = Double.valueOf(splitline[0]);
-      double tf_idf = tf * (1/idf);
+      double tf_idf = tf * idf;
       buf_writer.write(Double.toString(tf_idf) + "\t" + key + "\t" + Doc);
       buf_writer.newLine();
     }
