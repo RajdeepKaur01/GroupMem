@@ -500,9 +500,8 @@ class MemListNode {
     // change phase
     createStateLogAndPut(StateLog, 2);
     phase = 2;
-    sendJuiceF2RequestTo();
-
     abortEveryJuiceWorker(phase);
+    sendJuiceF2RequestTo();
   }
 
   public void DistributeJuiceJobs(String prefix,int phase){
