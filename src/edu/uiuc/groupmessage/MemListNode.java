@@ -60,6 +60,7 @@ class MemListNode {
       file_dir.mkdirs();
       FileHandler fileTxt = new FileHandler(dirPath + ".log");
       fileTxt.setFormatter(new SimpleFormatter());
+      LOGGER.setUseParentHandlers(false);
       LOGGER.addHandler(fileTxt);
     } catch (IOException ex) {
       System.err.println("Log file cannot be created");
@@ -280,7 +281,7 @@ class MemListNode {
       public boolean accept(File dir, String name) {
         int count = 0;
         for (int i = 0; i < name.length(); i++) {
-          if (name.charAt(i) == '_') {
+          if (name.charAt(i) == '_' || name.charAt(i) == '.') {
             count++;
           }
         }
@@ -334,7 +335,7 @@ class MemListNode {
   }
 
   public GroupMessage handleRenameFileRequest(final String prefix) {
-    System.out.println("Broadcast the RENAME_FILE message");
+    //System.out.println("Broadcast the RENAME_FILE message");
     GroupMessage msg = GroupMessage.newBuilder()
       .setTarget(currentMember)
       .setAction(GroupMessage.Action.RENAME_FILE)

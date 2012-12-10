@@ -11,7 +11,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 import edu.uiuc.groupmessage.GroupMessageProtos.Member;
@@ -48,7 +47,7 @@ class FileServer extends Thread {
     }
 
     public void run() {
-      System.out.println("FileServerWorker is up");
+      //System.out.println("FileServerWorker is up");
       try {
 	// Open I/O
 	DataInputStream sock_in = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
@@ -181,7 +180,7 @@ class FileServer extends Thread {
       } catch(IOException ex) {
 	System.out.println(ex.getMessage());
       }
-      System.out.println("FileServerWorker is down");
+      //System.out.println("FileServerWorker is down");
     }
   }
   public void run() {

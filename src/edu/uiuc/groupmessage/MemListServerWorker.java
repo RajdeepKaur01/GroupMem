@@ -18,7 +18,7 @@ class MemListServerWorker extends Thread {
     this.sock = sock;
   }
   public void run() {
-    System.out.println("MemListServerWorker is up");
+    //System.out.println("MemListServerWorker is up");
     try {
       // Open I/O
       InputStream sock_in = sock.getInputStream();
@@ -26,9 +26,9 @@ class MemListServerWorker extends Thread {
       GroupMessage msg = GroupMessage.parseDelimitedFrom(sock_in);
 
       // Print the message content
-      if (msg.getAction() != GroupMessage.Action.PUT_FILE && msg.getAction() != GroupMessage.Action.PUSH_FILE) {
-        System.out.println(msg.toString());
-      }
+//      if (msg.getAction() != GroupMessage.Action.PUT_FILE && msg.getAction() != GroupMessage.Action.PUSH_FILE) {
+//        System.out.println(msg.toString());
+//      }
 
       // Process the message
       GroupMessage response = currentNode.processMessage(msg);
@@ -44,6 +44,6 @@ class MemListServerWorker extends Thread {
     } catch(IOException ex) {
       System.out.println(ex.getMessage());
     }
-    System.out.println("MemListServerWorker is down");
+    //System.out.println("MemListServerWorker is down");
   }
 }

@@ -33,7 +33,7 @@ class FileClient extends Thread {
   }
 
   public void run() {
-    System.out.println("FileClient is up");
+    //System.out.println("FileClient is up");
     try {
       // Setup Socket and I/O
       Socket sock = new Socket(receiver.getIp(), receiver.getPort() + 2); 
@@ -91,6 +91,6 @@ class FileClient extends Thread {
     } catch (Exception ex) {
       System.out.println(ex.getMessage());
     }
-    System.out.println("FileClient is down");
+    //System.out.println("FileClient is down");
   }
 }
