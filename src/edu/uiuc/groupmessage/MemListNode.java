@@ -499,8 +499,8 @@ class MemListNode {
 
     // change phase
     createStateLogAndPut(StateLog, 2);
-    phase = 2;
     abortEveryJuiceWorker(phase);
+    phase = 2;
     sendJuiceF2RequestTo();
   }
 
