@@ -40,7 +40,7 @@ class MemListNode {
   String StateLog = "_StateLog_";
   int phase = 0;
   String GloPrefix;
-  public boolean debug = false;
+  public boolean debug = true;
   private ArrayList<Boolean> JobDone;
   private ArrayList<Boolean> Jobf2Done;
   private PriorityQueue < job > queue;
@@ -578,7 +578,7 @@ class MemListNode {
   public job findjob(int phase, String prefix){
     synchronized(getQ()) {
       job TopJob = getQ().peek();
-      while ((TopJob == null) || (getJobDone().get(TopJob.getid()) == true)){
+      while ((TopJob == null) || (getJobDone().get(TopJob.getid()) == true)) {
         if (TopJob == null){
           System.out.println("Queue is empty");
 
@@ -604,7 +604,7 @@ class MemListNode {
 
           return null;
         } else if (getJobDone().get(TopJob.getid()) == true){
-          System.out.println("Job "+TopJob.getid()+" is done. Throw it out.");
+          System.out.println("Job " + TopJob.getid() + " is done. Throw it out.");
           getQ().remove();
           TopJob = getQ().peek();
         }
@@ -749,7 +749,7 @@ class MemListNode {
       LinkedList< String > cmd_array = new LinkedList< String >();
       cmd_array.add("java");
       cmd_array.add("-cp");
-      cmd_array.add("../GroupMem-mp3/bin:lib/protobuf-java-2.4.1.jar");
+      cmd_array.add("/home/ktseng2/code/GroupMem/bin:lib/protobuf-java-2.4.1.jar");
       cmd_array.add("edu.uiuc.groupmessage.SDFSClient");
       cmd_array.add(getMemberList().get(0).getIp());
       cmd_array.add("6611");
