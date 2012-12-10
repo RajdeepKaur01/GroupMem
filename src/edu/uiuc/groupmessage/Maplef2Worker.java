@@ -12,7 +12,6 @@ import java.util.LinkedList;
 import edu.uiuc.groupmessage.GroupMessageProtos.GroupMessage;
 
 class Maplef2Worker  extends Thread {
-  String phase2doneprefix = "phase2_";
   boolean done;
   boolean abort;
   String prefix;
@@ -100,7 +99,7 @@ class Maplef2Worker  extends Thread {
           currentNode.sendAbortMessage();
           return;
         }
-        currentNode.OprationSDFS("put",work,phase2doneprefix+work);
+        currentNode.OprationSDFS("put", work, work);
         // construct done file
         try{
           File file = new File(filename);

@@ -1,4 +1,3 @@
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -17,7 +16,8 @@ public class tf
     }
 
     String prefix = args[0];
-    for (int i = 1; i < args.length; i++)
+    String job_id = args[1];
+    for (int i = 2; i < args.length; i++)
     {
       HashMap<String, Integer> keymap = new HashMap<String, Integer>();
       File file = new File(args[i]);
@@ -42,9 +42,8 @@ public class tf
           if (charnum == 0)
             continue;
 
-          wordnum++;
-          temp[charnum] = '\0';
-          key = key.concat(new String(temp));
+          wordnum++; 
+          key = key.concat(new String(temp, 0, charnum));
           if (keymap.containsKey(key)){
             int value = (Integer) keymap.get(key) + 1;
             keymap.put(key, value);
@@ -69,25 +68,17 @@ public class tf
       }
 
       //System.out.println(keymap.values());
-      ToFile(prefix,wordnum,keymap,args[i]);
+      ToFile(prefix, job_id, wordnum, keymap, args[i]);
     }
 
   }
 
-  static void ToFile(String prefix, int wordtotal, HashMap<String, Integer> keyMap,String doc) throws IOException{
+  static void ToFile(String prefix, String job_id, int wordtotal, HashMap<String, Integer> keyMap,String doc) throws IOException {
     Set<String> keys = keyMap.keySet();
-    for(String key: keys){
-      String filename = prefix+"_"+key;
-//      File outfile = new File(filename);
-//
-//      if (outfile.createNewFile()){
-//        System.out.println(outfile.getName()+" is created!");
-//      }else{
-//        System.out.println(outfile.getName()+" already exists.");
-//      }
-
+    for(String key : keys) {
+      String filename = prefix + "_" + key + "_" + job_id;
+      System.out.println(filename);
       int wordc = (Integer) keyMap.get(key);
-      //System.out.println("wordc = "+wordc+",wordtotal = "+wordtotal);
       FileWriter buf_writer = new FileWriter(filename);
       buf_writer.write(Double.toString((double)wordc/(double)wordtotal)+"\t" + doc + "\n");
       buf_writer.close();

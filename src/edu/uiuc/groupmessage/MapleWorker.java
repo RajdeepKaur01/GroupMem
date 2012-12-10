@@ -1,5 +1,7 @@
 package edu.uiuc.groupmessage;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.io.IOException;
 import java.io.FilenameFilter;
@@ -109,6 +111,53 @@ class MapleWorker extends Thread {
   {
     String pathname = System.getProperty("user.dir");
     File folder = new File(pathname);
+    String[] files = folder.list(new FilenameFilter() {
+      @Override
+      public boolean accept( File dir, String name ) {
+        return name.startsWith(prefix);
+      }
+    });
+
+    // Generate the tar ball _tarball_name_.tgz
+    Runtime runtime = Runtime.getRuntime(); 
+    String tar_name = "_tarball_" + (new File(work)).getName() + ".tgz";
+    System.out.println("Generating the tar ball file " + tar_name);
+    try {
+      ArrayList< String > cmd_array = new ArrayList< String >();
+      cmd_array.add("tar");
+      cmd_array.add("czf");
+      cmd_array.add(tar_name);
+      Collections.addAll(cmd_array, files);
+      Process process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
+      process.waitFor();
+    } catch (IOException ex) {
+      ex.printStackTrace();
+    }
+    System.out.println("Finished generating the tar ball file " + tar_name);
+
+    // Put the tarball file into SDFS
+    currentNode.OprationSDFS("put", tar_name, tar_name);
+    File file = new File(tar_name);
+      if(file.delete())
+        System.out.println(file.getName() + " is deleted!!!!!!!!!!!!!");
+      else
+        System.out.println("Delete " + file.getName() + " is failed.!!!!!!!!!!!!!!!!!");
+        
+    // Delete all the files with the prefix
+    System.out.println("Delete all files with prefix " + prefix);
+    try {
+      ArrayList< String > cmd_array = new ArrayList< String >();
+      cmd_array.add("rm");
+      cmd_array.add("-f");
+      Collections.addAll(cmd_array, files);
+      Process process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
+      process.waitFor();
+    } catch (IOException ex) {
+      ex.printStackTrace();
+    }
+    System.out.println("Finished deleting all files with prefix " + prefix);
+
+    /*File folder = new File(pathname);
     File [] files = folder.listFiles(new FilenameFilter() {
       @Override
       public boolean accept( File dir, String name ) {
@@ -127,7 +176,7 @@ class MapleWorker extends Thread {
         System.out.println(file.getName() + " is deleted!!!!!!!!!!!!!");
       else
         System.out.println("Delete " + file.getName() + " is failed.!!!!!!!!!!!!!!!!!");
-    }
+    }*/
   }
 
 
@@ -140,6 +189,7 @@ class MapleWorker extends Thread {
       cmd_array.add("java");
       cmd_array.add("tf");
       cmd_array.add(prefix);
+      cmd_array.add(jobid);
       cmd_array.add(work);
       process = runtime.exec(cmd_array.toArray(new String[cmd_array.size()]));
       while (abort == false){

@@ -333,18 +333,20 @@ class MemListNode {
   }
 
   public void handleAbortConfirm(Member member){
-    for (int i = 0; i < memberListForAbort.size(); i++){
-      if (memberListForAbort.get(i).equals(member)){
-        memberListForAbort.remove(i);
-        System.out.println("memberListForAbort.size() = "+memberListForAbort.size());
-        if (memberListForAbort.size() == 0){
-          GroupMessage msg = GroupMessage.newBuilder()
-            .setTarget(currentMember)
-            .setAction(GroupMessage.Action.ALL_ABORT)
-            .build();
-          sendMessageTo(msg, getMemberList().get(0));
+    synchronized(memberListForAbort) {
+      for (int i = 0; i < memberListForAbort.size(); i++){
+        if (memberListForAbort.get(i).equals(member)){
+          memberListForAbort.remove(i);
+          System.out.println("memberListForAbort.size() = "+memberListForAbort.size());
+          if (memberListForAbort.size() == 0){
+            GroupMessage msg = GroupMessage.newBuilder()
+              .setTarget(currentMember)
+              .setAction(GroupMessage.Action.ALL_ABORT)
+              .build();
+            sendMessageTo(msg, getMemberList().get(0));
+          }
+          break;
         }
-        break;
       }
     }
   }
@@ -361,27 +363,27 @@ class MemListNode {
       createStateLogAndPut(StateLog,phase);
 
       // remove all intermediate files
-      LinkedList<String> workfiles = OprationSDFS("list",prefix,"");
-      for (int i = 0; i < workfiles.size(); i++)
-        OprationSDFS("delete",workfiles.get(i),"");
+      OprationSDFS("erase", prefix, "");
+      OprationSDFS("erase", "_tarball_", "");
 
       // then renaming those phase2_prefix_key as prefix_key
-      LinkedList<String> keyset = OprationSDFS("list","phase2_","");
-      for (int i = 0; i < keyset.size(); i++){
-        OprationSDFS("get",keyset.get(i),keyset.get(i));
-        File oldfile =new File(keyset.get(i));
-        String newfilename = ResetName(keyset.get(i));/////////
-        File newfile =new File(newfilename);
+//      LinkedList<String> keyset = OprationSDFS("list","phase2_","");
+//      for (int i = 0; i < keyset.size(); i++){
+//        OprationSDFS("get",keyset.get(i),keyset.get(i));
+//        File oldfile =new File(keyset.get(i));
+//        String newfilename = ResetName(keyset.get(i));/////////
+//        File newfile =new File(newfilename);
+//
+//        if(oldfile.renameTo(newfile)){
+//          System.out.println("Rename "+keyset.get(i)+" succesful");
+//        }else{
+//          System.out.println("Rename "+keyset.get(i)+" failed");
+//        }
+//        OprationSDFS("put",newfilename,newfilename);
+//        OprationSDFS("delete",keyset.get(i),"");
+//        deletefile(newfilename);
+//      }
 
-        if(oldfile.renameTo(newfile)){
-          System.out.println("Rename "+keyset.get(i)+" succesful");
-        }else{
-          System.out.println("Rename "+keyset.get(i)+" failed");
-        }
-        OprationSDFS("put",newfilename,newfilename);
-        OprationSDFS("delete",keyset.get(i),"");
-        deletefile(newfilename);
-      }
       LOGGER.warning("Maple Execution Time: " + (System.currentTimeMillis() - mapleTimestamp));
       System.out.println("-------Maple is Completely Done-----------");
     } catch (InterruptedException ex) {
