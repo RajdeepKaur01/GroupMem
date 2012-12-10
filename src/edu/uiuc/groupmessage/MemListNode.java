@@ -374,9 +374,10 @@ class MemListNode {
         }
 
       // reset maple to ready state
+			int old_phase = phase;
+			phase = 0;
       createStateLogAndPut(StateLog, 0);
-      abortEveryWorker(phase);
-      phase = 0;
+      abortEveryWorker(old_phase);
 
       // remove all intermediate files
       OprationSDFS("erase", prefix, "");
@@ -484,9 +485,10 @@ class MemListNode {
 
     // change phase
     phase_count = 0;
-    createStateLogAndPut(StateLog, 2);
-    abortEveryWorker(phase);
+		int old_phase = phase;
     phase = 2;
+    createStateLogAndPut(StateLog, 2);
+    abortEveryWorker(old_phase);
   }
 
   public void handleJuicePhaseTwo(List< String > args){
@@ -498,9 +500,10 @@ class MemListNode {
     }
 
     // change phase
-    createStateLogAndPut(StateLog, 2);
-    abortEveryJuiceWorker(phase);
+		int old_phase = phase;
     phase = 2;
+    createStateLogAndPut(StateLog, 2);
+    abortEveryJuiceWorker(old_phase);
     sendJuiceF2RequestTo();
   }
 
